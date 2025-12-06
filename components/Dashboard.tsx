@@ -154,7 +154,7 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
                 : 'bg-eco-white border-3 border-eco-border text-eco-black/60 hover:text-eco-black'
             } rounded-t-lg border-3`}
           >
-            Today
+            <h2>Today</h2>
           </button>
           <button
             onClick={() => setActiveTab('tomorrow')}
@@ -164,7 +164,7 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
                 : 'bg-eco-white border-3 border-eco-border text-eco-black/60 hover:text-eco-black'
             } rounded-t-lg border-3`}
           >
-            Tomorrow
+            <h2>Tomorrow</h2>
           </button>
         </div>
 
