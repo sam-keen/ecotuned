@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: linear-gradient(180deg, #FAFAFA 0%, #F5F5F5 100%);
+  color: #1A1A1A;
+  min-height: 100vh;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Base card style - with subtle color */
+  .eco-card {
+    background: #FAFAFA;
+    border: 3px solid #B8E6D5;
+    box-shadow: 8px 8px 0px #B8E6D5;
+    border-radius: 12px;
+  }
+
+  /* Colorful button variations */
+  .eco-btn {
+    background: #A8C9A1;
+    color: #1A1A1A;
+    border: 3px solid #A8C9A1;
+    border-radius: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: all 0.15s ease;
+    box-shadow: 4px 4px 0px #B8E6D5;
+  }
+
+  .eco-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px #B8E6D5;
+    background: #B8E6D5;
+  }
+
+  .eco-btn:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0px 0px 0px #B8E6D5;
+  }
+
+  .eco-btn-sky {
+    background: #B3D9E8;
+    color: #1A1A1A;
+    border: 3px solid #B3D9E8;
+    box-shadow: 4px 4px 0px #A8D5E2;
+  }
+
+  .eco-btn-sky:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px #A8D5E2;
+    background: #A8D5E2;
+  }
+
+  .eco-btn-lemon {
+    background: #FFF4B3;
+    color: #1A1A1A;
+    border: 3px solid #FFF4B3;
+    box-shadow: 4px 4px 0px #B8E6D5;
+  }
+
+  .eco-btn-lemon:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px #B8E6D5;
+  }
+
+  /* Colorful badges - colors now controlled by Badge component */
+  .eco-badge {
+    border-radius: 6px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  /* Organic hover with colored shadows */
+  .eco-hover {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .eco-hover:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 10px 10px 0px #B3D9E8;
+  }
+
+  /* Floating ambient animation */
+  @keyframes float-eco {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(2deg); }
+  }
+
+  .eco-float {
+    animation: float-eco 6s ease-in-out infinite;
+  }
+}
