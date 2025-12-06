@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Outfit, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
+import { Analytics } from "@vercel/analytics/next"
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -46,6 +47,7 @@ export default function RootLayout({
           </header>
           <main className="container mx-auto px-4 py-6">
             {children}
+            <Analytics />
           </main>
           <footer className="mt-16 relative overflow-hidden bg-gradient-to-r from-eco-sage/30 via-eco-mint/30 to-eco-azure/30 border-t-4 border-eco-mint">
             <div className="container mx-auto px-4 py-8">
