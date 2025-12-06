@@ -17,7 +17,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: 'EcoTuned - Energy Saving Made Simple',
-  description: 'Get personalised energy-saving recommendations based on tomorrow\'s weather forecast',
+  description: "Get personalised energy-saving recommendations based on your postcode's weather forecast",
 }
 
 export default function RootLayout({
