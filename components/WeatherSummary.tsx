@@ -11,9 +11,7 @@ export default function WeatherSummary({ weather }: WeatherSummaryProps) {
     <div className="space-y-4">
       {/* Temperature */}
       <div className="border-2 border-eco-coral/60 bg-eco-white/80 backdrop-blur-sm p-3 rounded-lg">
-        <div className="text-3xl font-display font-black text-eco-black">
-          {weather.tempHigh}°C
-        </div>
+        <div className="text-3xl font-display font-black text-eco-black">{weather.tempHigh}°C</div>
         <div className="text-xs font-bold text-eco-black/70 uppercase">
           High (Low: {weather.tempLow}°C)
         </div>

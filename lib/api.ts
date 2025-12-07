@@ -1,7 +1,4 @@
-import {
-  postcodeResponseSchema,
-  type SimplifiedWeather,
-} from './schemas'
+import { postcodeResponseSchema, type SimplifiedWeather } from './schemas'
 
 /**
  * Fetches postcode data from Postcodes.io API
@@ -11,9 +8,7 @@ export async function fetchPostcodeData(postcode: string) {
   const cleanPostcode = postcode.replace(/\s/g, '').toUpperCase()
 
   try {
-    const response = await fetch(
-      `https://api.postcodes.io/postcodes/${cleanPostcode}`
-    )
+    const response = await fetch(`https://api.postcodes.io/postcodes/${cleanPostcode}`)
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -57,15 +52,14 @@ export async function fetchWeatherForecast(
     const params = new URLSearchParams({
       latitude: latitude.toString(),
       longitude: longitude.toString(),
-      hourly: 'temperature_2m,precipitation_probability,cloud_cover,wind_speed_10m,weather_code',
+      hourly:
+        'temperature_2m,precipitation_probability,cloud_cover,wind_speed_10m,weather_code,shortwave_radiation,relative_humidity_2m',
       daily: 'temperature_2m_max,temperature_2m_min,sunrise,sunset',
       timezone: 'Europe/London',
       forecast_days: '2', // Today + Tomorrow
     })
 
-    const response = await fetch(
-      `https://api.open-meteo.com/v1/forecast?${params.toString()}`
-    )
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`)
 
     if (!response.ok) {
       throw new Error('Failed to fetch weather forecast from Open-Meteo')
@@ -102,6 +96,8 @@ export async function fetchWeatherForecast(
         rainProb: data.hourly.precipitation_probability[index] || 0,
         windSpeed: data.hourly.wind_speed_10m[index],
         weatherCode: data.hourly.weather_code[index],
+        solarRadiation: data.hourly.shortwave_radiation[index] || 0,
+        humidity: data.hourly.relative_humidity_2m[index] || 50,
       }))
       .filter((item: any) => item.time.startsWith(tomorrowDateStr))
 
@@ -123,8 +119,12 @@ export async function fetchWeatherForecast(
     )
 
     // Calculate max rain probability
-    const maxRainProb = Math.round(
-      Math.max(...tomorrowHourlyData.map((h: any) => h.rainProb))
+    const maxRainProb = Math.round(Math.max(...tomorrowHourlyData.map((h: any) => h.rainProb)))
+
+    // Calculate average humidity
+    const avgHumidity = Math.round(
+      tomorrowHourlyData.reduce((sum: number, h: any) => sum + h.humidity, 0) /
+        tomorrowHourlyData.length
     )
 
     // Determine dominant weather condition from WMO weather codes
@@ -136,16 +136,32 @@ export async function fetchWeatherForecast(
     )[0]
     const conditions = getWeatherConditionFromCode(dominantCode)
 
-    // Find sunny periods (cloud coverage < 30% and low rain probability)
+    // Find sunny periods (good solar radiation > 200 W/m²)
+    // Used for solar panel recommendations - rain doesn't matter
     const sunnyPeriods = tomorrowHourlyData
-      .filter((h: any) => h.cloudCoverage < 30 && h.rainProb < 30)
+      .filter((h: any) => h.solarRadiation > 200)
       .map((h: any) => ({
         hour: h.hour,
         temp: Math.round(h.temp),
         cloudCoverage: h.cloudCoverage,
+        solarRadiation: Math.round(h.solarRadiation),
+      }))
+
+    // Find drying periods (good solar radiation AND low rain probability)
+    // Used for line-drying recommendations - needs dry conditions
+    const dryingPeriods = tomorrowHourlyData
+      .filter((h: any) => h.solarRadiation > 200 && h.rainProb < 30)
+      .map((h: any) => ({
+        hour: h.hour,
+        temp: Math.round(h.temp),
+        cloudCoverage: h.cloudCoverage,
+        solarRadiation: Math.round(h.solarRadiation),
+        rainProbability: h.rainProb,
+        humidity: h.humidity,
       }))
 
     const sunnyHours = sunnyPeriods.length
+    const dryingHours = dryingPeriods.length
 
     return {
       date: tomorrowDateStr,
@@ -156,10 +172,13 @@ export async function fetchWeatherForecast(
       cloudCoveragePercent: avgCloudCoverage,
       windSpeedMph: avgWindSpeed,
       rainProbability: maxRainProb,
+      avgHumidity,
       sunnyHours,
+      dryingHours,
       sunrise,
       sunset,
       sunnyPeriods,
+      dryingPeriods,
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -181,15 +200,14 @@ export async function fetchTodayAndTomorrowWeather(
     const params = new URLSearchParams({
       latitude: latitude.toString(),
       longitude: longitude.toString(),
-      hourly: 'temperature_2m,precipitation_probability,cloud_cover,wind_speed_10m,weather_code',
+      hourly:
+        'temperature_2m,precipitation_probability,cloud_cover,wind_speed_10m,weather_code,shortwave_radiation,relative_humidity_2m',
       daily: 'temperature_2m_max,temperature_2m_min,sunrise,sunset',
       timezone: 'Europe/London',
       forecast_days: '2',
     })
 
-    const response = await fetch(
-      `https://api.open-meteo.com/v1/forecast?${params.toString()}`
-    )
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`)
 
     if (!response.ok) {
       throw new Error('Failed to fetch weather forecast from Open-Meteo')
@@ -226,11 +244,7 @@ export async function fetchTodayAndTomorrowWeather(
 /**
  * Helper function to process weather data for a specific day
  */
-function processDayWeather(
-  data: any,
-  dateStr: string,
-  label: string
-): SimplifiedWeather {
+function processDayWeather(data: any, dateStr: string, label: string): SimplifiedWeather {
   // Find day's index in the daily data
   const dayIndex = data.daily.time.indexOf(dateStr)
 
@@ -255,6 +269,8 @@ function processDayWeather(
       rainProb: data.hourly.precipitation_probability[index] || 0,
       windSpeed: data.hourly.wind_speed_10m[index],
       weatherCode: data.hourly.weather_code[index],
+      solarRadiation: data.hourly.shortwave_radiation[index] || 0,
+      humidity: data.hourly.relative_humidity_2m[index] || 50,
     }))
     .filter((item: any) => item.time.startsWith(dateStr))
 
@@ -264,20 +280,21 @@ function processDayWeather(
 
   // Calculate average cloud coverage
   const avgCloudCoverage = Math.round(
-    dayHourlyData.reduce((sum: number, h: any) => sum + h.cloudCoverage, 0) /
-      dayHourlyData.length
+    dayHourlyData.reduce((sum: number, h: any) => sum + h.cloudCoverage, 0) / dayHourlyData.length
   )
 
   // Calculate average wind speed (convert km/h to mph)
   const avgWindSpeed = Math.round(
-    (dayHourlyData.reduce((sum: number, h: any) => sum + h.windSpeed, 0) /
-      dayHourlyData.length) *
+    (dayHourlyData.reduce((sum: number, h: any) => sum + h.windSpeed, 0) / dayHourlyData.length) *
       0.621371
   )
 
   // Calculate max rain probability
-  const maxRainProb = Math.round(
-    Math.max(...dayHourlyData.map((h: any) => h.rainProb))
+  const maxRainProb = Math.round(Math.max(...dayHourlyData.map((h: any) => h.rainProb)))
+
+  // Calculate average humidity
+  const avgHumidity = Math.round(
+    dayHourlyData.reduce((sum: number, h: any) => sum + h.humidity, 0) / dayHourlyData.length
   )
 
   // Determine dominant weather condition
@@ -289,16 +306,32 @@ function processDayWeather(
   )[0]
   const conditions = getWeatherConditionFromCode(dominantCode)
 
-  // Find sunny periods
+  // Find sunny periods (good solar radiation > 200 W/m²)
+  // Used for solar panel recommendations - rain doesn't matter
   const sunnyPeriods = dayHourlyData
-    .filter((h: any) => h.cloudCoverage < 30 && h.rainProb < 30)
+    .filter((h: any) => h.solarRadiation > 200)
     .map((h: any) => ({
       hour: h.hour,
       temp: Math.round(h.temp),
       cloudCoverage: h.cloudCoverage,
+      solarRadiation: Math.round(h.solarRadiation),
+    }))
+
+  // Find drying periods (good solar radiation AND low rain probability)
+  // Used for line-drying recommendations - needs dry conditions
+  const dryingPeriods = dayHourlyData
+    .filter((h: any) => h.solarRadiation > 200 && h.rainProb < 30)
+    .map((h: any) => ({
+      hour: h.hour,
+      temp: Math.round(h.temp),
+      cloudCoverage: h.cloudCoverage,
+      solarRadiation: Math.round(h.solarRadiation),
+      rainProbability: h.rainProb,
+      humidity: Math.round(h.humidity),
     }))
 
   const sunnyHours = sunnyPeriods.length
+  const dryingHours = dryingPeriods.length
 
   return {
     date: dateStr,
@@ -309,10 +342,13 @@ function processDayWeather(
     cloudCoveragePercent: avgCloudCoverage,
     windSpeedMph: avgWindSpeed,
     rainProbability: maxRainProb,
+    avgHumidity,
     sunnyHours,
+    dryingHours,
     sunrise,
     sunset,
     sunnyPeriods,
+    dryingPeriods,
   }
 }
 

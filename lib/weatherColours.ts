@@ -71,16 +71,12 @@ export function getWeatherColors(weatherCode: number): WeatherColorPalette {
   }
 
   // Drizzle, Rain, Showers
-  if (
-    [51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weatherCode)
-  ) {
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(weatherCode)) {
     return COLOR_PALETTES.rainy
   }
 
   // Snow
-  if (
-    [71, 73, 75, 77, 85, 86].includes(weatherCode)
-  ) {
+  if ([71, 73, 75, 77, 85, 86].includes(weatherCode)) {
     return COLOR_PALETTES.snowy
   }
 

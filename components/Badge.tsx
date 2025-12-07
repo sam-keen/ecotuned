@@ -16,8 +16,6 @@ export default function Badge({ children, color = 'sage' }: BadgeProps) {
   }
 
   return (
-    <div className={`eco-badge ${colorClasses[color]} border-2 text-eco-black`}>
-      {children}
-    </div>
+    <div className={`eco-badge ${colorClasses[color]} border-2 text-eco-black`}>{children}</div>
   )
 }

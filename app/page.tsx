@@ -18,7 +18,7 @@ export default async function Home() {
             Welcome to EcoTuned
           </h2>
           <p className="text-eco-black mb-8 font-medium leading-relaxed">
-            Answer a few questions to get personalised energy-saving tips based on today and tomorrow's weather.
+            Answer a few questions to get personalised energy-saving tips.
           </p>
           <SetupForm />
         </div>

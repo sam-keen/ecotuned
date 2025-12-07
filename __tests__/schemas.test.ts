@@ -6,11 +6,8 @@ describe('userPreferencesSchema', () => {
       postcode: 'SW1A 2AA',
       hasGarden: true,
       hasEV: false,
-      cycleToWork: true,
       hasSolar: false,
-      homeWeekdayMorning: true,
-      homeWeekdayAfternoon: false,
-      homeWeekdayEvening: true,
+      hasTimeOfUseTariff: true,
     }
 
     const result = userPreferencesSchema.parse(valid)
@@ -18,7 +15,7 @@ describe('userPreferencesSchema', () => {
     expect(result).toBeDefined()
     expect(result.postcode).toBe('SW1A2AA') // Should be normalized (no spaces, uppercase)
     expect(result.hasGarden).toBe(true)
-    expect(result.homeWeekdayMorning).toBe(true)
+    expect(result.hasTimeOfUseTariff).toBe(true)
   })
 
   test('should normalize postcode (remove spaces and uppercase)', () => {
@@ -26,7 +23,6 @@ describe('userPreferencesSchema', () => {
       postcode: 'sw1a 2aa',
       hasGarden: false,
       hasEV: false,
-      cycleToWork: false,
       hasSolar: false,
     }
 
@@ -40,7 +36,6 @@ describe('userPreferencesSchema', () => {
       postcode: 'INVALID123',
       hasGarden: false,
       hasEV: false,
-      cycleToWork: false,
       hasSolar: false,
     }
 
@@ -52,14 +47,13 @@ describe('userPreferencesSchema', () => {
       postcode: '',
       hasGarden: false,
       hasEV: false,
-      cycleToWork: false,
       hasSolar: false,
     }
 
     expect(() => userPreferencesSchema.parse(invalid)).toThrow()
   })
 
-  test('should default boolean fields to false (except evening which defaults to true)', () => {
+  test('should default boolean fields to false', () => {
     const minimal = {
       postcode: 'SW1A2AA',
     }
@@ -68,11 +62,8 @@ describe('userPreferencesSchema', () => {
 
     expect(result.hasGarden).toBe(false)
     expect(result.hasEV).toBe(false)
-    expect(result.cycleToWork).toBe(false)
     expect(result.hasSolar).toBe(false)
-    expect(result.homeWeekdayMorning).toBe(false)
-    expect(result.homeWeekdayAfternoon).toBe(false)
-    expect(result.homeWeekdayEvening).toBe(true) // Defaults to true
+    expect(result.hasTimeOfUseTariff).toBe(false)
   })
 
   test('should accept various valid UK postcode formats', () => {
@@ -91,7 +82,6 @@ describe('userPreferencesSchema', () => {
         postcode,
         hasGarden: false,
         hasEV: false,
-        cycleToWork: false,
         hasSolar: false,
       })
       expect(result).toBeDefined()
@@ -110,12 +100,32 @@ describe('simplifiedWeatherSchema', () => {
       cloudCoveragePercent: 20,
       windSpeedMph: 10,
       rainProbability: 15,
+      avgHumidity: 65,
       sunnyHours: 6,
+      dryingHours: 5,
       sunrise: '2025-12-05T08:00:00',
       sunset: '2025-12-05T16:00:00',
       sunnyPeriods: [
-        { hour: 12, temp: 15, cloudCoverage: 10 },
-        { hour: 15, temp: 16, cloudCoverage: 15 },
+        { hour: 12, temp: 15, cloudCoverage: 10, solarRadiation: 450 },
+        { hour: 15, temp: 16, cloudCoverage: 15, solarRadiation: 400 },
+      ],
+      dryingPeriods: [
+        {
+          hour: 12,
+          temp: 15,
+          cloudCoverage: 10,
+          solarRadiation: 450,
+          rainProbability: 10,
+          humidity: 60,
+        },
+        {
+          hour: 15,
+          temp: 16,
+          cloudCoverage: 15,
+          solarRadiation: 400,
+          rainProbability: 15,
+          humidity: 65,
+        },
       ],
     }
 
@@ -155,16 +165,21 @@ describe('simplifiedWeatherSchema', () => {
       cloudCoveragePercent: 90,
       windSpeedMph: 10,
       rainProbability: 80,
+      avgHumidity: 85,
       sunnyHours: 0,
+      dryingHours: 0,
       sunrise: '2025-12-05T08:00:00',
       sunset: '2025-12-05T16:00:00',
       sunnyPeriods: [],
+      dryingPeriods: [],
     }
 
     const result = simplifiedWeatherSchema.parse(valid)
 
     expect(result.sunnyPeriods).toEqual([])
+    expect(result.dryingPeriods).toEqual([])
     expect(result.sunnyHours).toBe(0)
+    expect(result.dryingHours).toBe(0)
   })
 })
 

@@ -9,13 +9,11 @@ export const userPreferencesSchema = z.object({
     .transform((val) => val.toUpperCase().replace(/\s/g, '')),
   hasGarden: z.boolean().default(false),
   hasEV: z.boolean().default(false),
-  cycleToWork: z.boolean().default(false),
   hasSolar: z.boolean().default(false),
-  // Time-of-day availability (when user is typically home on weekdays)
-  // Note: We assume flexibility on weekends, so no weekend-specific settings
-  homeWeekdayMorning: z.boolean().default(false), // 6am-12pm weekdays
-  homeWeekdayAfternoon: z.boolean().default(false), // 12pm-6pm weekdays
-  homeWeekdayEvening: z.boolean().default(true), // 6pm-12am weekdays (default: most people home)
+  hasTimeOfUseTariff: z.boolean().default(false), // Economy 7, Octopus Agile, etc.
+  preferredTemperature: z.number().min(15).max(25).default(19), // User's preferred home temperature in Celsius
+  heatingType: z.enum(['gas', 'electric', 'heat-pump', 'other']).default('gas'), // Type of heating system
+  hotWaterSystem: z.enum(['combi', 'tank', 'electric', 'other']).default('combi'), // Type of hot water system
 })
 
 export type UserPreferences = z.infer<typeof userPreferencesSchema>
@@ -23,13 +21,15 @@ export type UserPreferences = z.infer<typeof userPreferencesSchema>
 // Postcodes.io API response schema
 export const postcodeResponseSchema = z.object({
   status: z.number(),
-  result: z.object({
-    postcode: z.string(),
-    latitude: z.number(),
-    longitude: z.number(),
-    admin_district: z.string().optional(),
-    region: z.string().optional(),
-  }).nullable(),
+  result: z
+    .object({
+      postcode: z.string(),
+      latitude: z.number(),
+      longitude: z.number(),
+      admin_district: z.string().optional(),
+      region: z.string().optional(),
+    })
+    .nullable(),
 })
 
 export type PostcodeResponse = z.infer<typeof postcodeResponseSchema>
@@ -46,7 +46,9 @@ export const simplifiedWeatherSchema = z.object({
   cloudCoveragePercent: z.number(),
   windSpeedMph: z.number(),
   rainProbability: z.number(),
-  sunnyHours: z.number(),
+  avgHumidity: z.number(), // Average relative humidity percentage (0-100)
+  sunnyHours: z.number(), // Hours with good solar radiation (for solar panels)
+  dryingHours: z.number(), // Hours with good solar AND low rain (for line-drying)
   sunrise: z.string(), // ISO 8601 format time string
   sunset: z.string(), // ISO 8601 format time string
   sunnyPeriods: z.array(
@@ -54,6 +56,17 @@ export const simplifiedWeatherSchema = z.object({
       hour: z.number(),
       temp: z.number(),
       cloudCoverage: z.number(),
+      solarRadiation: z.number(), // W/m² - Global Horizontal Irradiance
+    })
+  ),
+  dryingPeriods: z.array(
+    z.object({
+      hour: z.number(),
+      temp: z.number(),
+      cloudCoverage: z.number(),
+      solarRadiation: z.number(), // W/m²
+      rainProbability: z.number(), // % chance of rain this hour
+      humidity: z.number(), // Relative humidity % this hour
     })
   ),
 })
@@ -68,9 +81,12 @@ export const recommendationSchema = z.object({
   reasoning: z.string(),
   priority: z.enum(['high', 'medium', 'low']),
   savingsEstimate: z.string().optional(),
-  category: z.enum(['heating', 'laundry', 'mobility', 'cooking', 'insulation']).optional(),
+  category: z
+    .enum(['heating', 'laundry', 'mobility', 'cooking', 'insulation', 'appliances'])
+    .optional(),
   impact: z.enum(['high', 'medium', 'low']).optional(),
   timeStatus: z.enum(['active', 'passed']).optional(),
+  isPersonalised: z.boolean().default(false), // True if based on user's specific setup (garden, EV, solar, tariff)
 })
 
 export type Recommendation = z.infer<typeof recommendationSchema>

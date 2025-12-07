@@ -14,20 +14,17 @@ A weather-driven energy and money-saving suggestion app that helps UK users make
 
 ## User Setup Questions
 
-**Your Postcode**: Used to fetch accurate local weather data
+**Your Postcode**: Used to fetch accurate local weather data for your area
 
-**Your Setup**:
-1. Do you have a garden or balcony? (for line-drying laundry)
-2. Do you have an electric vehicle? (for smart charging times)
-3. Do you cycle to work? (for cycle-friendly weekday cycling tips)
-4. Do you have solar panels? (for solar generation forecasts)
+**Your Home Setup**:
 
-**Weekday Availability** (when you're typically home):
-- Mornings (6am-12pm)
-- Afternoons (12pm-6pm)
-- Evenings (6pm-12am)
-
-*Note: Weekend availability is assumed to be flexible*
+1. **Garden / Balcony**: For outdoor line-drying recommendations (indoor drying tips available to everyone)
+2. **Electric Vehicle**: For smart EV charging times (solar + off-peak optimisation)
+3. **Solar Panels**: For solar generation forecasts and energy usage timing
+4. **Cheaper Night-Time Electricity**: Time-of-use tariffs like Economy 7, Octopus Agile, etc.
+5. **Heating Type**: Gas Boiler, Electric Heating, Heat Pump, or Other (for heating-specific tips)
+6. **Hot Water System**: Combi Boiler, Hot Water Tank, Electric Immersion, or Other (for timing recommendations)
+7. **Preferred Home Temperature**: 15-25°C (for personalised heating recommendations)
 
 ## Tech Stack
 
@@ -35,12 +32,15 @@ A weather-driven energy and money-saving suggestion app that helps UK users make
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS with custom eco-themed design system
 - **Data Fetching**: TanStack Query (React Query) for client-side caching
-- **Form Handling**: React Hook Form
-- **Validation**: Zod
+- **Form Handling**: React Hook Form with Zod validation
+- **Validation**: Zod schemas for runtime type safety
+- **Code Quality**: ESLint + Prettier for consistent code formatting
 - **Testing**: Jest (unit tests) + Playwright (e2e tests)
+- **UI Components**: Radix UI for accessible modals and dialogs
+- **Analytics**: Vercel Analytics
 - **APIs** (both free, no registration required):
   - [Postcodes.io](https://postcodes.io/) - Free UK postcode to lat/long conversion
-  - [Open-Meteo](https://open-meteo.com/) - Free weather forecast data from national weather services
+  - [Open-Meteo](https://open-meteo.com/) - Free weather forecast data (temperature, humidity, solar radiation, wind, precipitation)
 
 ## Getting Started
 
@@ -79,6 +79,32 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Code Quality
+
+Format code with Prettier:
+
+```bash
+npm run format
+```
+
+Check formatting:
+
+```bash
+npm run format:check
+```
+
+Lint code with ESLint:
+
+```bash
+npm run lint
+```
+
+Auto-fix linting issues:
+
+```bash
+npm run lint:fix
+```
 
 ## Project Structure
 
@@ -132,7 +158,7 @@ ecotuned/
 
 ### Recommendation Engine
 
-The core of the app is a pure, synchronous function:
+The core of the app is a pure, synchronous function (`lib/recommendations.ts`):
 
 ```typescript
 generateRecommendations(
@@ -143,12 +169,24 @@ generateRecommendations(
 ): Recommendation[]
 ```
 
-- No side effects or API calls
-- Time-aware: marks recommendations as "passed" when their window has closed
-- Easy to unit test in isolation
-- Can be reused anywhere (server components, future API routes, etc.)
-- Returns prioritised recommendations (high → medium → low)
-- Day-aware logic for weekend vs weekday tips
+**Key Features**:
+
+- **Pure function**: No side effects or API calls - easy to test and reason about
+- **Time-aware**: Marks recommendations as "passed" when their action window has closed (e.g., line-drying after sunset)
+- **Personalisation-first**: Prioritises recommendations based on user's specific setup (heating type, tariff, etc.)
+- **Category diversity**: Max 2 recommendations per category to avoid overwhelming users
+- **Priority sorting**: High → medium → low, with personalised recommendations favored
+- **Weather-driven**: Uses postcode-specific forecast data (temperature, humidity, solar radiation, wind, precipitation)
+- **Smart categorisation**: laundry, heating, mobility, cooking, insulation, appliances
+
+**Recommendation Categories**:
+
+1. **Laundry**: Line-drying (outdoor), indoor drying (low humidity)
+2. **Mobility**: EV charging (solar + off-peak optimisation)
+3. **Heating**: Heat pump efficiency, natural ventilation, hot water timing
+4. **Cooking**: Batch cooking on cold/rainy days, avoid oven heat on hot days
+5. **Insulation**: Curtains/blinds for temperature control
+6. **Appliances**: Off-peak dishwasher/washing machine for time-of-use tariffs
 
 ## Testing
 
@@ -214,14 +252,29 @@ No environment variables required!
 
 ## Example Recommendations
 
-- **Line-dry laundry**: "Perfect drying conditions today with 4 hours of sunny weather (10am-2pm). Hang laundry outside now to save on tumble dryer costs."
-- **Cycle to work**: "Great cycling conditions today: dry, light winds (8mph), and mild temps. Cycle to work and save on fuel."
-- **EV charging**: "Charge your EV between 11am-3pm today during peak solar generation hours to maximise renewable energy use."
-- **Batch hot water**: "Cold forecast today (2-8°C). Schedule showers, baths, and hot water-intensive cleaning for off-peak hours when your heating is on anyway."
-- **Natural ventilation**: "Mild conditions today (14-18°C, low 11°C). Open windows to naturally ventilate instead of running heating."
-- **Off-peak appliances**: "Set your dishwasher and washing machine to run during off-peak hours tonight (11pm-7am)."
+**Personalised recommendations** (based on user setup):
 
-*Recommendations adapt based on weather, time of day, day of week, and user preferences*
+- **Line-dry laundry**: "Excellent line-drying conditions tomorrow with 5 hours of good drying and 10mph wind at 65% humidity. Hang your washing outside to save energy and money."
+- **EV solar charging**: "Best charging window: 12:00-14:00 when your solar panels will generate maximum power. Clear skies with temperatures around 18°C mean strong solar generation."
+- **Heat pump efficiency**: "Temperatures tomorrow (10°C) are ideal for heat pump efficiency. Your system will use 30-40% less energy than in very cold weather."
+- **Hot water tank timing**: "Mild night ahead (12°C low) means less heat loss from your tank. Heat during off-peak hours (11pm-7am) for maximum savings."
+- **Electric heating with solar**: "Strong solar generation tomorrow - run electric heating 13:00-15:00 to use your own electricity."
+
+**Weather-driven recommendations** (for everyone):
+
+- **Indoor drying**: "Low humidity tomorrow (45%) means clothes will dry quickly indoors without additional heating. Use a clothes airer near natural ventilation."
+- **Natural ventilation**: "Mild temperatures tomorrow (19°C) will reach your preferred temperature of 19°C - ideal conditions for natural ventilation."
+- **Curtains for insulation**: "Cold night ahead (dropping to 2°C). Close curtains and blinds at dusk to prevent heat loss."
+- **Batch cooking**: "Cold and wet tomorrow - ideal for batch cooking. Prep multiple meals at once while the oven heat helps warm your home."
+
+All recommendations include:
+
+- ✅ Savings estimates (£0.15-£4.00 per action)
+- ✅ Clear reasoning (why the recommendation makes sense)
+- ✅ Time-specific windows (when applicable)
+- ✅ Priority indicators (high/medium/low)
+
+_Recommendations adapt based on weather, time of day, day of week, and user's specific home setup_
 
 ## API Rate Limits
 
@@ -229,6 +282,7 @@ No environment variables required!
 - **Open-Meteo**: Free, 10,000 calls/day for non-commercial use, no authentication required
 
 Both APIs are more than sufficient for an MVP. The app implements:
+
 - **Client-side caching**: React Query caches weather data for 5 minutes per postcode
 - **Server-side initial fetch**: First load fetches server-side to avoid client waterfalls
 - **Efficient fetching**: Single API call fetches both today and tomorrow's weather

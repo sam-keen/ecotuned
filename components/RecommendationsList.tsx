@@ -11,8 +11,8 @@ export default function RecommendationsList({ recommendations }: Recommendations
     return (
       <div className="glass-subtle rounded-2xl p-8 text-center">
         <p className="text-slate-600 leading-relaxed">
-          No specific recommendations for tomorrow based on your current setup.
-          Check back tomorrow for new suggestions!
+          No specific recommendations for tomorrow based on your current setup. Check back tomorrow
+          for new suggestions!
         </p>
       </div>
     )
@@ -39,12 +39,8 @@ export default function RecommendationsList({ recommendations }: Recommendations
           <h3 className="text-4xl font-display font-bold mb-4 text-white drop-shadow-lg tracking-tight">
             {headline.title}
           </h3>
-          <p className="text-forest-50 mb-5 text-lg leading-relaxed">
-            {headline.description}
-          </p>
-          <p className="text-forest-100 text-sm italic leading-relaxed">
-            {headline.reasoning}
-          </p>
+          <p className="text-forest-50 mb-5 text-lg leading-relaxed">{headline.description}</p>
+          <p className="text-forest-100 text-sm italic leading-relaxed">{headline.reasoning}</p>
         </div>
         {/* Abstract decorative elements */}
         <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
@@ -61,13 +57,15 @@ export default function RecommendationsList({ recommendations }: Recommendations
               style={{ animationDelay: `${0.1 * (index + 1)}s` }}
             >
               {/* Abstract decorative shape */}
-              <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-20 ${
-                tip.priority === 'high'
-                  ? 'bg-gradient-dawn'
-                  : tip.priority === 'medium'
-                  ? 'bg-gradient-ocean'
-                  : 'bg-gradient-aurora'
-              }`}></div>
+              <div
+                className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-20 ${
+                  tip.priority === 'high'
+                    ? 'bg-gradient-dawn'
+                    : tip.priority === 'medium'
+                      ? 'bg-gradient-ocean'
+                      : 'bg-gradient-aurora'
+                }`}
+              ></div>
 
               <div className="relative z-10">
                 <div className="flex items-start justify-between mb-3">
@@ -76,8 +74,8 @@ export default function RecommendationsList({ recommendations }: Recommendations
                       tip.priority === 'high'
                         ? 'bg-gradient-dawn text-white'
                         : tip.priority === 'medium'
-                        ? 'bg-gradient-ocean text-white'
-                        : 'bg-gradient-aurora text-white'
+                          ? 'bg-gradient-ocean text-white'
+                          : 'bg-gradient-aurora text-white'
                     }`}
                   >
                     {tip.priority}
@@ -91,12 +89,8 @@ export default function RecommendationsList({ recommendations }: Recommendations
                 <h4 className="font-display font-bold text-slate-800 mb-2 text-xl group-hover:text-ocean-600 transition-colors tracking-tight">
                   {tip.title}
                 </h4>
-                <p className="text-slate-600 text-sm mb-3 leading-relaxed">
-                  {tip.description}
-                </p>
-                <p className="text-slate-500 text-xs italic leading-relaxed">
-                  {tip.reasoning}
-                </p>
+                <p className="text-slate-600 text-sm mb-3 leading-relaxed">{tip.description}</p>
+                <p className="text-slate-500 text-xs italic leading-relaxed">{tip.reasoning}</p>
               </div>
             </div>
           ))}

@@ -10,9 +10,7 @@ export default function Error({
   return (
     <div className="max-w-2xl mx-auto mt-8">
       <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-red-800 mb-2">
-          Something went wrong!
-        </h2>
+        <h2 className="text-xl font-semibold text-red-800 mb-2">Something went wrong!</h2>
         <p className="text-red-600 mb-4">
           We encountered an error while processing your request. This could be due to:
         </p>

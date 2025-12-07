@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Returning user flow', () => {
-  test('should remember preferences and show recommendations without form', async ({ page, context }) => {
+  test('should remember preferences and show recommendations without form', async ({
+    page,
+    context,
+  }) => {
     // First visit - set up preferences
     await page.goto('/')
 

@@ -93,8 +93,18 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
   }
 
   // Generate recommendations for both days
-  const todayRecommendations = generateRecommendations(data.weather.today, preferences, true, 'today')
-  const tomorrowRecommendations = generateRecommendations(data.weather.tomorrow, preferences, false, 'tomorrow')
+  const todayRecommendations = generateRecommendations(
+    data.weather.today,
+    preferences,
+    true,
+    'today'
+  )
+  const tomorrowRecommendations = generateRecommendations(
+    data.weather.tomorrow,
+    preferences,
+    false,
+    'tomorrow'
+  )
 
   // Sort today's recommendations to put passed ones at the bottom
   const sortedTodayRecommendations = [...todayRecommendations].sort((a, b) => {
@@ -105,44 +115,59 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
 
   return (
     <div>
-      {headerElement && createPortal(
-        <div className="grid grid-cols-[1fr_auto] gap-6 items-center">
-          {/* Column 1: Location and preferences stacked */}
-          <div className="flex flex-col gap-1">
-            {/* Location with bullet separator */}
-            <div className="text-sm">
-              <span className="font-black text-eco-black uppercase">
-                {data.postcodeData.postcode}
-              </span>
-              {data.postcodeData.region && (
-                <>
-                  <span className="mx-2 text-eco-black/60">•</span>
-                  <span className="font-medium text-eco-black/90">
-                    {data.postcodeData.region}
-                  </span>
-                </>
+      {headerElement &&
+        createPortal(
+          <div className="grid grid-cols-[1fr_auto] gap-6 items-center">
+            {/* Column 1: Location and preferences stacked */}
+            <div className="flex flex-col gap-1">
+              {/* Location with bullet separator */}
+              <div className="text-sm">
+                <span className="font-black text-eco-black uppercase">
+                  {data.postcodeData.postcode}
+                </span>
+                {data.postcodeData.region && (
+                  <>
+                    <span className="mx-2 text-eco-black/60">•</span>
+                    <span className="font-medium text-eco-black/90">
+                      {data.postcodeData.region}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Preferences */}
+              {(preferences.hasGarden ||
+                preferences.hasEV ||
+                preferences.hasSolar ||
+                preferences.hasTimeOfUseTariff ||
+                preferences.heatingType !== 'gas' ||
+                preferences.hotWaterSystem !== 'combi') && (
+                <div className="text-xs font-medium">
+                  Showing tips for{' '}
+                  {[
+                    preferences.hasGarden && 'gardens',
+                    preferences.hasEV && 'EV',
+                    preferences.hasSolar && 'solar',
+                    preferences.hasTimeOfUseTariff && 'off-peak tariff',
+                    preferences.heatingType === 'heat-pump' && 'heat pump',
+                    preferences.heatingType === 'electric' && 'electric heating',
+                    preferences.heatingType === 'other' && 'custom heating',
+                    preferences.hotWaterSystem === 'tank' && 'hot water tank',
+                    preferences.hotWaterSystem === 'electric' && 'electric immersion',
+                    preferences.hotWaterSystem === 'other' && 'custom hot water',
+                  ]
+                    .filter(Boolean)
+                    .join(', ')
+                    .replace(/, ([^,]*)$/, ' and $1')}
+                </div>
               )}
             </div>
 
-            {/* Preferences */}
-            {(preferences.hasGarden || preferences.hasEV || preferences.cycleToWork || preferences.hasSolar) && (
-              <div className="text-xs font-medium">
-                Showing tips for{' '}
-                {[
-                  preferences.hasGarden && 'gardens',
-                  preferences.hasEV && 'EV',
-                  preferences.cycleToWork && 'cycling',
-                  preferences.hasSolar && 'solar'
-                ].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' and $1')}
-              </div>
-            )}
-          </div>
-
-          {/* Column 2: Edit button */}
-          <EditPreferences currentPreferences={preferences} />
-        </div>,
-        headerElement
-      )}
+            {/* Column 2: Edit button */}
+            <EditPreferences currentPreferences={preferences} />
+          </div>,
+          headerElement
+        )}
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Tabs */}
         <div className="flex gap-4 border-b-4 border-eco-mint">
@@ -160,7 +185,7 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
             onClick={() => setActiveTab('tomorrow')}
             className={`px-6 py-3 font-display font-black uppercase tracking-tight text-xl transition-all ${
               activeTab === 'tomorrow'
-                  ? 'bg-eco-mint border-3 border-eco-mint text-eco-black'
+                ? 'bg-eco-mint border-3 border-eco-mint text-eco-black'
                 : 'bg-eco-white border-3 border-eco-border text-eco-black/60 hover:text-eco-black'
             } rounded-t-lg border-3`}
           >
@@ -183,8 +208,9 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
                       No Tips for Today
                     </h3>
                     <p className="text-eco-black/80 font-medium leading-relaxed">
-                      Based on today's weather and your setup, we don't have any specific energy-saving recommendations.
-                      Check back tomorrow or adjust your preferences if you'd like more tips!
+                      Based on today's weather and your setup, we don't have any specific
+                      energy-saving recommendations. Check back tomorrow or adjust your preferences
+                      if you'd like more tips!
                     </p>
                   </div>
                 ) : (
@@ -197,15 +223,11 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
                         className={`eco-card p-6 relative overflow-hidden ${isPassed ? 'opacity-50' : ''}`}
                       >
                         <div className="relative z-10">
-                          <div className="flex items-start justify-between gap-3 mb-4">
-                            <Badge>
-                              {index === 0 ? '#1 Priority' : `${tip.priority}`}
-                            </Badge>
-                            {tip.savingsEstimate && (
-                              <Badge>
-                                {tip.savingsEstimate}
-                              </Badge>
-                            )}
+                          <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                            <div className="flex gap-2 flex-wrap">
+                              <Badge>{index === 0 ? '#1 Priority' : `${tip.priority}`}</Badge>
+                            </div>
+                            {tip.savingsEstimate && <Badge>{tip.savingsEstimate}</Badge>}
                           </div>
                           <h3 className="text-2xl font-display font-black mb-3 uppercase tracking-tight text-eco-black">
                             {tip.title}
@@ -257,27 +279,21 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
                       No Tips for Tomorrow
                     </h3>
                     <p className="text-eco-black/80 font-medium leading-relaxed">
-                      Based on tomorrow's forecast and your setup, we don't have any specific energy-saving recommendations.
-                      Check back later or adjust your preferences if you'd like more tips!
+                      Based on tomorrow's forecast and your setup, we don't have any specific
+                      energy-saving recommendations. Check back later or adjust your preferences if
+                      you'd like more tips!
                     </p>
                   </div>
                 ) : (
                   tomorrowRecommendations.map((tip, index) => {
                     return (
-                      <div
-                        key={tip.id}
-                        className="eco-card p-6 relative overflow-hidden"
-                      >
+                      <div key={tip.id} className="eco-card p-6 relative overflow-hidden">
                         <div className="relative z-10">
-                          <div className="flex items-start justify-between gap-3 mb-4">
-                            <Badge>
-                              {index === 0 ? '#1 Priority' : `${tip.priority}`}
-                            </Badge>
-                            {tip.savingsEstimate && (
-                              <Badge>
-                                {tip.savingsEstimate}
-                              </Badge>
-                            )}
+                          <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                            <div className="flex gap-2 flex-wrap">
+                              <Badge>{index === 0 ? '#1 Priority' : `${tip.priority}`}</Badge>
+                            </div>
+                            {tip.savingsEstimate && <Badge>{tip.savingsEstimate}</Badge>}
                           </div>
                           <h3 className="text-2xl font-display font-black mb-3 uppercase tracking-tight text-eco-black">
                             {tip.title}

@@ -17,11 +17,11 @@ export async function savePreferences(formData: FormData) {
       postcode: formData.get('postcode') as string,
       hasGarden: formData.get('hasGarden') === 'true',
       hasEV: formData.get('hasEV') === 'true',
-      cycleToWork: formData.get('cycleToWork') === 'true',
       hasSolar: formData.get('hasSolar') === 'true',
-      homeWeekdayMorning: formData.get('homeWeekdayMorning') === 'true',
-      homeWeekdayAfternoon: formData.get('homeWeekdayAfternoon') === 'true',
-      homeWeekdayEvening: formData.get('homeWeekdayEvening') === 'true',
+      hasTimeOfUseTariff: formData.get('hasTimeOfUseTariff') === 'true',
+      preferredTemperature: Number(formData.get('preferredTemperature')) || 19,
+      heatingType: (formData.get('heatingType') as string) || 'gas',
+      hotWaterSystem: (formData.get('hotWaterSystem') as string) || 'combi',
     }
 
     // Validate with Zod schema

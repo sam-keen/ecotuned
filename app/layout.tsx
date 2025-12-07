@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Outfit, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from '@vercel/analytics/next'
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -18,14 +18,11 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: 'EcoTuned - Energy Saving Made Simple',
-  description: "Get personalised energy-saving recommendations based on your postcode's weather forecast",
+  description:
+    "Get personalised energy-saving recommendations based on your postcode's weather forecast",
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${outfit.variable} ${plusJakarta.variable}`}>
       <body className="min-h-screen font-sans">
@@ -77,6 +74,11 @@ export default function RootLayout({
                     >
                       Postcodes.io
                     </a>
+                  </p>
+                  <p className="mt-3 pt-3 border-t border-eco-black/20 max-w-2xl mx-auto">
+                    Cost savings are estimates based on average UK household appliance consumption
+                    and electricity rates. Actual savings will vary depending on your specific
+                    appliances, usage patterns, heating type, and electricity tariff.
                   </p>
                 </div>
               </div>

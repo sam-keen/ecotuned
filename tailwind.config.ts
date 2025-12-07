@@ -22,17 +22,17 @@ const config: Config = {
           border: '#D4D8DD',
 
           // Fresh accent colors - use sparingly
-          mint: '#B8E6D5',      // Fresh light green
-          sage: '#A8C9A1',      // Soft sage green
-          lemon: '#FFF4B3',     // Soft yellow
-          sky: '#B3D9E8',       // Sky blue
-          azure: '#A8D5E2',     // Light azure
+          mint: '#B8E6D5', // Fresh light green
+          sage: '#A8C9A1', // Soft sage green
+          lemon: '#FFF4B3', // Soft yellow
+          sky: '#B3D9E8', // Sky blue
+          azure: '#A8D5E2', // Light azure
 
           // Warm weather palette - sympathetic but distinct
-          coral: '#FF9B8A',     // Vibrant coral
-          peach: '#FFC491',     // Vibrant peach
-          sunset: '#FFA366',    // Vibrant sunset orange
-          rose: '#FFA3C7',      // Vibrant rose pink
+          coral: '#FF9B8A', // Vibrant coral
+          peach: '#FFC491', // Vibrant peach
+          sunset: '#FFA366', // Vibrant sunset orange
+          rose: '#FFA3C7', // Vibrant rose pink
         },
       },
       backgroundImage: {
@@ -44,7 +44,7 @@ const config: Config = {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.5s ease-out',
-        'float': 'float 3s ease-in-out infinite',
+        float: 'float 3s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
