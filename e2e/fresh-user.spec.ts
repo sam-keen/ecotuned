@@ -84,8 +84,8 @@ test.describe('Fresh user flow', () => {
     // Check all preferences
     await page.getByRole('checkbox', { name: /Garden.*Balcony/i }).check()
     await page.getByRole('checkbox', { name: /Electric Vehicle/i }).check()
-    await page.getByRole('checkbox', { name: /Cycle to Work/i }).check()
     await page.getByRole('checkbox', { name: /Solar Panels/i }).check()
+    await page.getByRole('checkbox', { name: /Cheaper Night-Time Electricity/i }).check()
 
     // Submit form
     await page.getByRole('button', { name: /get my tips/i }).click()

@@ -5,6 +5,8 @@ A weather-driven energy and money-saving suggestion app that helps UK users make
 ## Features
 
 - Personalised energy-saving recommendations based on today and tomorrow's weather
+- **Live GB electricity grid mix display** - See real-time renewable vs fossil vs nuclear generation (updates every 30 minutes)
+- **Grid-aware recommendations** - Get suggestions to run appliances when grid is cleanest
 - Simple setup with postcode and household preferences
 - Server-side rendering for fast initial load with client-side caching
 - Cookie-based preferences (no database required for MVP)
@@ -38,9 +40,10 @@ A weather-driven energy and money-saving suggestion app that helps UK users make
 - **Testing**: Jest (unit tests) + Playwright (e2e tests)
 - **UI Components**: Radix UI for accessible modals and dialogs
 - **Analytics**: Vercel Analytics
-- **APIs** (both free, no registration required):
+- **APIs** (all free, no registration required):
   - [Postcodes.io](https://postcodes.io/) - Free UK postcode to lat/long conversion
   - [Open-Meteo](https://open-meteo.com/) - Free weather forecast data (temperature, humidity, solar radiation, wind, precipitation)
+  - [Carbon Intensity API](https://carbonintensity.org.uk/) - Free GB electricity grid generation mix and carbon intensity data
 
 ## Getting Started
 
@@ -111,6 +114,11 @@ npm run lint:fix
 ```
 ecotuned/
 ├── app/
+│   ├── api/
+│   │   ├── grid/
+│   │   │   └── route.ts    # Grid data API with server-side caching
+│   │   └── weather/
+│   │       └── route.ts    # Weather data API with server-side caching
 │   ├── actions.ts          # Server actions for cookie management
 │   ├── error.tsx           # Error boundary component
 │   ├── globals.css         # Global styles and eco design tokens
@@ -122,6 +130,7 @@ ecotuned/
 │   ├── Badge.tsx           # Reusable badge component
 │   ├── Dashboard.tsx       # Main dashboard with tabs (client component)
 │   ├── EditPreferences.tsx # Edit preferences modal
+│   ├── GridMix.tsx         # Live electricity grid mix visualization
 │   ├── RecommendationsList.tsx
 │   ├── SetupForm.tsx       # Initial user setup form
 │   └── WeatherSummary.tsx  # Weather data display
@@ -144,8 +153,19 @@ ecotuned/
 
 ### Hybrid Rendering Approach
 
-- **Server-side initial load**: Main page fetches weather data server-side for fast first paint
-- **Client-side caching**: React Query manages subsequent fetches with 5-minute stale time
+- **Server-side initial load**: Main page fetches weather and grid data server-side for fast first paint
+- **Two-tier caching strategy**:
+  - **Server-side (Edge/CDN)**: Next.js API routes with HTTP cache headers
+    - Weather data: 5-minute cache (`s-maxage=300`)
+    - Grid data: 30-minute cache (`s-maxage=1800`)
+    - Shared globally across all users on Vercel Edge network
+    - `stale-while-revalidate` for graceful background updates
+  - **Client-side**: React Query manages browser cache
+    - Weather data: 5-minute stale time
+    - Grid data: 30-minute stale time
+    - Per-user caching in browser
+- **API Routes**: `/api/weather` and `/api/grid` act as caching layer between client and external APIs
+- **Separate queries**: Weather and grid data are fetched independently - grid failures don't break the page
 - **Dashboard component**: Client component with tabbed interface for today/tomorrow
 - **Portal-based header**: Client components inject content into server layout via React portals
 
@@ -165,7 +185,8 @@ generateRecommendations(
   weather: SimplifiedWeather,
   prefs: UserPreferences,
   isToday: boolean,
-  day: 'today' | 'tomorrow'
+  day: 'today' | 'tomorrow',
+  gridData?: GridData  // Optional - only for "today" recommendations
 ): Recommendation[]
 ```
 
@@ -173,6 +194,7 @@ generateRecommendations(
 
 - **Pure function**: No side effects or API calls - easy to test and reason about
 - **Time-aware**: Marks recommendations as "passed" when their action window has closed (e.g., line-drying after sunset)
+- **Grid-aware**: When grid data is available (today only), generates recommendations based on renewable percentage and carbon intensity
 - **Personalisation-first**: Prioritises recommendations based on user's specific setup (heating type, tariff, etc.)
 - **Category diversity**: Max 2 recommendations per category to avoid overwhelming users
 - **Priority sorting**: High → medium → low, with personalised recommendations favored
@@ -209,6 +231,24 @@ Coverage report:
 ```bash
 npm run test:coverage
 ```
+
+**Test Coverage (26 tests)**:
+
+- **Recommendation logic** (26 tests in `__tests__/recommendations.test.ts`):
+  - Line-drying recommendations (outdoor/indoor conditions)
+  - EV charging recommendations (solar + off-peak)
+  - Hot water timing recommendations (tanks, combi, electric)
+  - Heating recommendations (heat pumps, electric, natural ventilation)
+  - Appliance timing (off-peak tariffs)
+  - Grid-aware recommendations (6 tests):
+    - High renewable generation triggers (≥60% high priority, ≥50% medium priority)
+    - Low carbon intensity triggers (<150 g/kWh)
+    - Edge cases (no grid data, wrong day, insufficient renewables)
+  - Priority sorting and personalisation
+- **Schema validation** (tests in `__tests__/schemas.test.ts`):
+  - User preferences validation
+  - Weather data validation
+  - Grid data validation
 
 ### End-to-End Tests
 
@@ -267,6 +307,11 @@ No environment variables required!
 - **Curtains for insulation**: "Cold night ahead (dropping to 2°C). Close curtains and blinds at dusk to prevent heat loss."
 - **Batch cooking**: "Cold and wet tomorrow - ideal for batch cooking. Prep multiple meals at once while the oven heat helps warm your home."
 
+**Grid-aware recommendations** (today only, based on live electricity mix):
+
+- **High renewables**: "The GB grid is currently powered by 65% renewable energy (53% wind, 8% solar). This is a cleaner-than-average time to use electricity. Consider running your dishwasher, washing machine, or other high-energy appliances now."
+- **Low carbon intensity**: "The grid's carbon intensity is currently 130 g/kWh (low), which is lower than the UK average of ~200 g/kWh. A good time to use electricity-intensive appliances like ovens, washing machines, or electric heating."
+
 All recommendations include:
 
 - ✅ Savings estimates (£0.15-£4.00 per action)
@@ -280,12 +325,25 @@ _Recommendations adapt based on weather, time of day, day of week, and user's sp
 
 - **Postcodes.io**: Free, unlimited, no authentication required
 - **Open-Meteo**: Free, 10,000 calls/day for non-commercial use, no authentication required
+- **Carbon Intensity API**: Free, no rate limits published, no authentication required
 
-Both APIs are more than sufficient for an MVP. The app implements:
+All APIs are more than sufficient for an MVP. The app implements efficient caching to minimize API usage:
 
-- **Client-side caching**: React Query caches weather data for 5 minutes per postcode
-- **Server-side initial fetch**: First load fetches server-side to avoid client waterfalls
-- **Efficient fetching**: Single API call fetches both today and tomorrow's weather
+- **Two-tier caching** (server + client):
+  - **Server-side (Vercel Edge)**: Shared cache across all users globally
+    - Weather: 5-minute cache, 10-minute stale-while-revalidate
+    - Grid: 30-minute cache, 60-minute stale-while-revalidate
+  - **Client-side (React Query)**: Per-user browser cache
+    - Weather: 5-minute stale time
+    - Grid: 30-minute stale time
+- **Shared cache benefits**:
+  - Multiple users requesting same postcode get cached response
+  - Drastically reduces API calls under load
+  - Ready to scale from MVP to production
+- **Server-side initial fetch**: First page load is server-rendered for fast first paint
+- **Efficient fetching**:
+  - Single API call fetches both today and tomorrow's weather
+  - Grid data fetched separately so failures don't break the page
 
 ## Future Enhancements
 

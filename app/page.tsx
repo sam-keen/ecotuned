@@ -1,5 +1,5 @@
 import { getPreferences } from './actions'
-import { fetchPostcodeData, fetchTodayAndTomorrowWeather } from '@/lib/api'
+import { fetchPostcodeData, fetchTodayAndTomorrowWeather, fetchGridIntensity } from '@/lib/api'
 import SetupForm from '@/components/SetupForm'
 import Dashboard from '@/components/Dashboard'
 import Badge from '@/components/Badge'
@@ -35,9 +35,19 @@ export default async function Home() {
       postcodeData.longitude
     )
 
+    // Fetch grid data separately - don't fail the whole page if it errors
+    let gridData
+    try {
+      gridData = await fetchGridIntensity()
+    } catch (gridError) {
+      console.error('Failed to fetch grid data:', gridError)
+      // Grid data will be undefined, component won't show but page will work
+    }
+
     initialData = {
       postcodeData,
       weather,
+      gridData,
     }
   } catch (error) {
     // If server-side fetch fails, pass no initial data

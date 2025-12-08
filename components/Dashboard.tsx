@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
-import type { UserPreferences, SimplifiedWeather } from '@/lib/schemas'
-import { fetchPostcodeData, fetchTodayAndTomorrowWeather } from '@/lib/api'
+import type { UserPreferences, SimplifiedWeather, GridData } from '@/lib/schemas'
 import { generateRecommendations } from '@/lib/recommendations'
 import WeatherSummary from './WeatherSummary'
+import GridMix from './GridMix'
 import EditPreferences from './EditPreferences'
 import Badge from './Badge'
 
@@ -23,39 +23,68 @@ interface DashboardProps {
       today: SimplifiedWeather
       tomorrow: SimplifiedWeather
     }
+    gridData?: GridData
   }
 }
 
 export default function Dashboard({ preferences, initialData }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<'today' | 'tomorrow'>('today')
   const [headerElement, setHeaderElement] = useState<HTMLElement | null>(null)
+  const [gridMixElement, setGridMixElement] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
     setHeaderElement(document.getElementById('header-controls'))
+    setGridMixElement(document.getElementById('header-grid-mix'))
   }, [])
 
   // Use React Query to fetch and cache weather data
   const { data, isLoading, error } = useQuery({
     queryKey: ['weather', preferences.postcode],
     queryFn: async () => {
-      // Fetch postcode data
-      const postcodeData = await fetchPostcodeData(preferences.postcode)
-
-      // Fetch weather for both days
-      const weather = await fetchTodayAndTomorrowWeather(
-        postcodeData.latitude,
-        postcodeData.longitude
+      // Fetch from our API route (which has server-side caching)
+      const response = await fetch(
+        `/api/weather?postcode=${encodeURIComponent(preferences.postcode)}`
       )
 
-      return {
-        postcodeData,
-        weather,
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch weather data')
       }
+
+      return response.json()
     },
-    // Use initial data from server if available
-    initialData,
-    // Data is fresh for 5 minutes
+    // Use initial data from server if available (without gridData)
+    initialData: initialData
+      ? {
+          postcodeData: initialData.postcodeData,
+          weather: initialData.weather,
+        }
+      : undefined,
+    // Data is fresh for 5 minutes (client-side cache)
     staleTime: 5 * 60 * 1000,
+  })
+
+  // Separate query for grid data (updates every 30 minutes)
+  const {
+    data: gridData,
+    isLoading: isGridLoading,
+    error: gridError,
+  } = useQuery({
+    queryKey: ['gridIntensity'],
+    queryFn: async () => {
+      // Fetch from our API route (which has server-side caching)
+      const response = await fetch('/api/grid')
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch grid data')
+      }
+
+      return response.json()
+    },
+    initialData: initialData?.gridData,
+    // Grid data updates every 30 minutes (client-side cache)
+    staleTime: 30 * 60 * 1000,
   })
 
   if (isLoading) {
@@ -93,17 +122,20 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
   }
 
   // Generate recommendations for both days
+  // Pass grid data only to today's recommendations (grid data is live, not forecast)
   const todayRecommendations = generateRecommendations(
     data.weather.today,
     preferences,
     true,
-    'today'
+    'today',
+    gridData // Pass live grid data for today's recommendations
   )
   const tomorrowRecommendations = generateRecommendations(
     data.weather.tomorrow,
     preferences,
     false,
     'tomorrow'
+    // No grid data for tomorrow - grid data is live only
   )
 
   // Sort today's recommendations to put passed ones at the bottom
@@ -168,7 +200,12 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
           </div>,
           headerElement
         )}
-      <div className="max-w-6xl mx-auto space-y-8">
+      {gridMixElement &&
+        gridData &&
+        !isGridLoading &&
+        !gridError &&
+        createPortal(<GridMix gridData={gridData} />, gridMixElement)}
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Tabs */}
         <div className="flex gap-4 border-b-4 border-eco-mint">
           <button

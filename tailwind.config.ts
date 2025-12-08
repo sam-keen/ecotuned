@@ -25,6 +25,7 @@ const config: Config = {
           mint: '#B8E6D5', // Fresh light green
           sage: '#A8C9A1', // Soft sage green
           lemon: '#FFF4B3', // Soft yellow
+          'lemon-strong': '#FFFFA1', // More vibrant yellow
           sky: '#B3D9E8', // Sky blue
           azure: '#A8D5E2', // Light azure
 

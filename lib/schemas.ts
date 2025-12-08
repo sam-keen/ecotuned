@@ -73,6 +73,59 @@ export const simplifiedWeatherSchema = z.object({
 
 export type SimplifiedWeather = z.infer<typeof simplifiedWeatherSchema>
 
+// Carbon Intensity API schemas
+export const fuelMixSchema = z.object({
+  fuel: z.string(),
+  perc: z.number(),
+})
+
+export type FuelMix = z.infer<typeof fuelMixSchema>
+
+// Schema for /generation endpoint (no intensity data)
+export const gridGenerationResponseSchema = z.object({
+  data: z.object({
+    from: z.string(),
+    to: z.string(),
+    generationmix: z.array(fuelMixSchema),
+  }),
+})
+
+// Schema for /intensity endpoint (includes intensity but not generation mix)
+export const gridIntensityResponseSchema = z.object({
+  data: z.array(
+    z.object({
+      from: z.string(),
+      to: z.string(),
+      intensity: z.object({
+        forecast: z.number(), // Carbon intensity in g/kWh
+        index: z.enum(['very low', 'low', 'moderate', 'high', 'very high']),
+      }),
+    })
+  ),
+})
+
+export type GridIntensityResponse = z.infer<typeof gridIntensityResponseSchema>
+
+// Grouped grid data for UI display
+export const gridDataSchema = z.object({
+  carbonIntensity: z.number(), // g/kWh
+  carbonIndex: z.enum(['very low', 'low', 'moderate', 'high', 'very high']),
+  renewablePercent: z.number(), // Combined wind + solar + hydro
+  fossilPercent: z.number(), // Combined gas + coal
+  nuclearPercent: z.number(),
+  otherPercent: z.number(), // Combined biomass + imports + other
+  fuelBreakdown: z.array(
+    z.object({
+      fuel: z.string(),
+      perc: z.number(),
+      category: z.enum(['renewable', 'fossil', 'nuclear', 'other']),
+    })
+  ),
+  timestamp: z.string(),
+})
+
+export type GridData = z.infer<typeof gridDataSchema>
+
 // Recommendation schema
 export const recommendationSchema = z.object({
   id: z.string(),

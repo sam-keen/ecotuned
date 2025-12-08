@@ -37,7 +37,7 @@ test.describe('Returning user flow', () => {
     await page.goto('/')
 
     await page.getByLabel('Postcode').fill('M1 1AE')
-    await page.getByRole('checkbox', { name: /Cycle to Work/i }).check()
+    await page.getByRole('checkbox', { name: /Garden.*Balcony/i }).check()
 
     await page.getByRole('button', { name: /get my tips/i }).click()
     await page.waitForURL('/')

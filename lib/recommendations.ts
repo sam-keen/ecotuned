@@ -1,20 +1,22 @@
-import type { Recommendation, SimplifiedWeather, UserPreferences } from './schemas'
+import type { Recommendation, SimplifiedWeather, UserPreferences, GridData } from './schemas'
 
 /**
  * Pure function to generate personalised recommendations
- * Based on weather forecast and user preferences
+ * Based on weather forecast, user preferences, and grid carbon intensity
  *
  * @param weather - Simplified weather data (for today or tomorrow)
  * @param prefs - User preferences (postcode, garden, EV, cycling, solar)
  * @param isToday - Whether this is for today (enables time-aware filtering)
  * @param day - Label for the day ('today' | 'tomorrow') for text generation
+ * @param gridData - Optional grid carbon intensity data (for grid-aware recommendations)
  * @returns Array of recommendations, sorted by priority
  */
 export function generateRecommendations(
   weather: SimplifiedWeather,
   prefs: UserPreferences,
   isToday: boolean = false,
-  day: 'today' | 'tomorrow' = 'tomorrow'
+  day: 'today' | 'tomorrow' = 'tomorrow',
+  gridData?: GridData
 ): Recommendation[] {
   const recommendations: Recommendation[] = []
 
@@ -311,6 +313,40 @@ export function generateRecommendations(
       impact: 'medium',
       isPersonalised: true,
     })
+  }
+
+  // 11. Grid-aware recommendations (only for today, when we have live grid data)
+  if (isToday && gridData && day === 'today') {
+    const renewablePercent = gridData.renewablePercent
+    const carbonIntensity = gridData.carbonIntensity
+
+    // High renewable generation (>50%) - recommend running appliances now
+    if (renewablePercent >= 50) {
+      recommendations.push({
+        id: 'grid-clean-now',
+        title: 'Great time to run appliances',
+        description: `The GB grid is currently powered by ${renewablePercent.toFixed(0)}% renewable energy (${gridData.fuelBreakdown.find((f) => f.fuel === 'wind')?.perc.toFixed(0) || 0}% wind, ${gridData.fuelBreakdown.find((f) => f.fuel === 'solar')?.perc.toFixed(0) || 0}% solar). This is a cleaner-than-average time to use electricity. Consider running your dishwasher, washing machine, or other high-energy appliances now.`,
+        reasoning: `High renewable generation means lower carbon emissions per kWh. Carbon intensity is ${carbonIntensity > 0 ? carbonIntensity + ' g/kWh' : gridData.carbonIndex}.`,
+        priority: renewablePercent >= 60 ? 'high' : 'medium',
+        category: 'appliances',
+        impact: 'high',
+        isPersonalised: false,
+      })
+    }
+
+    // Very low carbon intensity (< 150 g/kWh) - even if renewables aren't super high
+    if (carbonIntensity > 0 && carbonIntensity < 150 && renewablePercent < 50) {
+      recommendations.push({
+        id: 'grid-low-carbon',
+        title: 'Low carbon intensity right now',
+        description: `The grid's carbon intensity is currently ${carbonIntensity} g/kWh (${gridData.carbonIndex}), which is lower than the UK average of ~200 g/kWh. A good time to use electricity-intensive appliances like ovens, washing machines, or electric heating.`,
+        reasoning: 'Taking advantage of lower carbon intensity reduces environmental impact.',
+        priority: 'medium',
+        category: 'appliances',
+        impact: 'medium',
+        isPersonalised: false,
+      })
+    }
   }
 
   // Sort by priority (high > medium > low), then by impact

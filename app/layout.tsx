@@ -41,6 +41,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <div id="header-controls"></div>
               </div>
             </div>
+            {/* Full-width grid mix container */}
+            <div
+              id="header-grid-mix"
+              className="container max-w-6xl mx-auto px-4 lg:px-0 pb-4"
+            ></div>
           </header>
           <main className="container mx-auto px-4 py-6">
             {children}
@@ -75,9 +80,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       Postcodes.io
                     </a>
                   </p>
-                  <p className="mt-3 pt-3 border-t border-eco-black/20 max-w-2xl mx-auto">
+                  <p className="pb-4">
+                    Grid data from{' '}
+                    <a
+                      href="https://carbonintensity.org.uk"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold hover:text-eco-black transition underline"
+                    >
+                      Carbon Intensity API
+                    </a>
+                  </p>
+                  <p className="mt-4 pt-4 border-t border-eco-black/20 max-w-2xl mx-auto">
                     Cost savings are estimates based on average UK household appliance consumption
-                    and electricity rates. Actual savings will vary depending on your specific
+                    and electricity rates. Actual savings will vary depending on your specific home,
                     appliances, usage patterns, heating type, and electricity tariff.
                   </p>
                 </div>

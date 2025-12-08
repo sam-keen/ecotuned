@@ -301,4 +301,110 @@ describe('generateRecommendations', () => {
     // Should still return at least off-peak appliances recommendation
     expect(recommendations.length).toBeGreaterThan(0)
   })
+
+  // Grid-aware recommendation tests
+  describe('Grid-aware recommendations', () => {
+    const mockGridData = {
+      carbonIntensity: 120,
+      carbonIndex: 'low' as const,
+      renewablePercent: 65,
+      fossilPercent: 20,
+      nuclearPercent: 10,
+      otherPercent: 5,
+      fuelBreakdown: [
+        { fuel: 'wind', perc: 53, category: 'renewable' as const },
+        { fuel: 'solar', perc: 8, category: 'renewable' as const },
+        { fuel: 'hydro', perc: 4, category: 'renewable' as const },
+        { fuel: 'gas', perc: 20, category: 'fossil' as const },
+        { fuel: 'nuclear', perc: 10, category: 'nuclear' as const },
+        { fuel: 'biomass', perc: 5, category: 'other' as const },
+      ],
+      timestamp: '2025-01-08T12:00:00Z',
+    }
+
+    test('should generate high renewable recommendation when renewables >= 60%', () => {
+      const gridData = { ...mockGridData, renewablePercent: 65 }
+      const recommendations = generateRecommendations(
+        baseWeather,
+        basePrefs,
+        true,
+        'today',
+        gridData
+      )
+
+      const gridRec = recommendations.find((r) => r.id === 'grid-clean-now')
+      expect(gridRec).toBeDefined()
+      expect(gridRec?.priority).toBe('high')
+      expect(gridRec?.description).toContain('65%')
+      expect(gridRec?.description).toContain('renewable')
+    })
+
+    test('should generate medium priority recommendation when renewables 50-59%', () => {
+      const gridData = { ...mockGridData, renewablePercent: 55 }
+      const recommendations = generateRecommendations(
+        baseWeather,
+        basePrefs,
+        true,
+        'today',
+        gridData
+      )
+
+      const gridRec = recommendations.find((r) => r.id === 'grid-clean-now')
+      expect(gridRec).toBeDefined()
+      expect(gridRec?.priority).toBe('medium')
+    })
+
+    test('should generate low carbon intensity recommendation when < 150 g/kWh', () => {
+      const gridData = { ...mockGridData, carbonIntensity: 130, renewablePercent: 45 }
+      const recommendations = generateRecommendations(
+        baseWeather,
+        basePrefs,
+        true,
+        'today',
+        gridData
+      )
+
+      const gridRec = recommendations.find((r) => r.id === 'grid-low-carbon')
+      expect(gridRec).toBeDefined()
+      expect(gridRec?.description).toContain('130 g/kWh')
+      expect(gridRec?.description).toContain('lower than the UK average')
+    })
+
+    test('should not generate grid recommendations when renewables < 50% and carbon > 150', () => {
+      const gridData = { ...mockGridData, renewablePercent: 40, carbonIntensity: 180 }
+      const recommendations = generateRecommendations(
+        baseWeather,
+        basePrefs,
+        true,
+        'today',
+        gridData
+      )
+
+      const gridCleanRec = recommendations.find((r) => r.id === 'grid-clean-now')
+      const gridLowRec = recommendations.find((r) => r.id === 'grid-low-carbon')
+      expect(gridCleanRec).toBeUndefined()
+      expect(gridLowRec).toBeUndefined()
+    })
+
+    test('should not generate grid recommendations for tomorrow (only today)', () => {
+      const gridData = { ...mockGridData, renewablePercent: 70 }
+      const recommendations = generateRecommendations(
+        baseWeather,
+        basePrefs,
+        false,
+        'tomorrow',
+        gridData
+      )
+
+      const gridRec = recommendations.find((r) => r.id === 'grid-clean-now')
+      expect(gridRec).toBeUndefined()
+    })
+
+    test('should not generate grid recommendations when gridData is not provided', () => {
+      const recommendations = generateRecommendations(baseWeather, basePrefs, true, 'today')
+
+      const gridRec = recommendations.find((r) => r.id === 'grid-clean-now')
+      expect(gridRec).toBeUndefined()
+    })
+  })
 })

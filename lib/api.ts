@@ -1,4 +1,9 @@
-import { postcodeResponseSchema, type SimplifiedWeather } from './schemas'
+import {
+  postcodeResponseSchema,
+  type SimplifiedWeather,
+  gridGenerationResponseSchema,
+  type GridData,
+} from './schemas'
 
 /**
  * Fetches postcode data from Postcodes.io API
@@ -366,4 +371,95 @@ function getWeatherConditionFromCode(code: number): string {
   if (code <= 84) return 'Showers'
   if (code <= 99) return 'Thunderstorm'
   return 'Unknown'
+}
+
+/**
+ * Fetches current grid intensity data from Carbon Intensity API
+ * Returns current generation mix and carbon intensity for GB
+ * Carbon Intensity API is free and requires no API key
+ */
+export async function fetchGridIntensity(): Promise<GridData> {
+  try {
+    // Fetch both generation mix and intensity data
+    const [genResponse, intensityResponse] = await Promise.all([
+      fetch('https://api.carbonintensity.org.uk/generation'),
+      fetch('https://api.carbonintensity.org.uk/intensity'),
+    ])
+
+    if (!genResponse.ok) {
+      throw new Error('Failed to fetch grid generation data from Carbon Intensity API')
+    }
+
+    const genData = await genResponse.json()
+    const validated = gridGenerationResponseSchema.parse(genData)
+
+    // Try to get intensity data, but don't fail if unavailable
+    let intensityData = null
+    if (intensityResponse.ok) {
+      intensityData = await intensityResponse.json()
+    }
+
+    // Transform raw API data into our GridData format
+    const { data } = validated
+    const generationmix = data.generationmix
+
+    // Categorize fuels and calculate totals
+    const fuelCategories: Record<string, 'renewable' | 'fossil' | 'nuclear' | 'other'> = {
+      wind: 'renewable',
+      solar: 'renewable',
+      hydro: 'renewable',
+      gas: 'fossil',
+      coal: 'fossil',
+      nuclear: 'nuclear',
+      biomass: 'other',
+      imports: 'other',
+      other: 'other',
+    }
+
+    let renewableTotal = 0
+    let fossilTotal = 0
+    let nuclearTotal = 0
+    let otherTotal = 0
+
+    const fuelBreakdown = generationmix.map((fuel) => {
+      const category = fuelCategories[fuel.fuel] || 'other'
+
+      // Add to category totals
+      if (category === 'renewable') renewableTotal += fuel.perc
+      else if (category === 'fossil') fossilTotal += fuel.perc
+      else if (category === 'nuclear') nuclearTotal += fuel.perc
+      else otherTotal += fuel.perc
+
+      return {
+        fuel: fuel.fuel,
+        perc: fuel.perc,
+        category,
+      }
+    })
+
+    // Get carbon intensity from the intensity endpoint if available
+    let carbonIntensity = 0
+    let carbonIndex: 'very low' | 'low' | 'moderate' | 'high' | 'very high' = 'moderate'
+
+    if (intensityData?.data?.[0]?.intensity) {
+      carbonIntensity = intensityData.data[0].intensity.forecast || 0
+      carbonIndex = intensityData.data[0].intensity.index || 'moderate'
+    }
+
+    return {
+      carbonIntensity,
+      carbonIndex,
+      renewablePercent: Math.round(renewableTotal * 10) / 10,
+      fossilPercent: Math.round(fossilTotal * 10) / 10,
+      nuclearPercent: Math.round(nuclearTotal * 10) / 10,
+      otherPercent: Math.round(otherTotal * 10) / 10,
+      fuelBreakdown,
+      timestamp: data.from,
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('Failed to process grid intensity data')
+  }
 }
