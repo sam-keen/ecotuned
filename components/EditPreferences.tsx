@@ -152,7 +152,7 @@ export default function EditPreferences({ currentPreferences }: EditPreferencesP
                 </button>
                 <button
                   onClick={handleClear}
-                  className="flex-1 px-5 py-3 font-bold uppercase text-sm bg-eco-coral border-2 border-eco-coral text-eco-black rounded-lg hover:bg-eco-sunset hover:border-eco-sunset transition shadow-[4px_4px_0px_#FF9B7A]"
+                  className="flex-1 px-5 py-3 font-bold uppercase text-sm bg-eco-coral/80 border-2 border-eco-coral text-eco-black rounded-lg hover:bg-eco-sunset/80 hover:border-eco-sunset transition shadow-[4px_4px_0px_#FF9B7A]"
                 >
                   Yes, Clear All
                 </button>
