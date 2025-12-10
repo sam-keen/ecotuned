@@ -42,9 +42,12 @@ export const simplifiedWeatherSchema = z.object({
   tempHigh: z.number(),
   tempLow: z.number(),
   avgTemp: z.number(),
-  conditions: z.string(),
+  tempNow: z.number().optional(),
+  conditions: z.string(), // Primary/most severe condition
+  conditionsRange: z.string().optional(), // Range if varied (e.g., "Drizzle → Heavy Rain")
   cloudCoveragePercent: z.number(),
-  windSpeedMph: z.number(),
+  windSpeedMph: z.number(), // Average wind speed
+  windSpeedMax: z.number(), // Maximum wind speed (gusts)
   rainProbability: z.number(),
   avgHumidity: z.number(), // Average relative humidity percentage (0-100)
   sunnyHours: z.number(), // Hours with good solar radiation (for solar panels)
@@ -59,14 +62,14 @@ export const simplifiedWeatherSchema = z.object({
       solarRadiation: z.number(), // W/m² - Global Horizontal Irradiance
     })
   ),
-  dryingPeriods: z.array(
+  continuousDryingPeriods: z.array(
     z.object({
-      hour: z.number(),
-      temp: z.number(),
-      cloudCoverage: z.number(),
-      solarRadiation: z.number(), // W/m²
-      rainProbability: z.number(), // % chance of rain this hour
-      humidity: z.number(), // Relative humidity % this hour
+      startHour: z.number(), // Start hour (0-23)
+      endHour: z.number(), // End hour (0-23)
+      duration: z.number(), // Number of hours
+      avgScore: z.number(), // Average drying score (0-1)
+      avgTemp: z.number(), // Average temperature
+      avgHumidity: z.number(), // Average humidity
     })
   ),
 })

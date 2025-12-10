@@ -9,29 +9,28 @@ interface WeatherSummaryProps {
 export default function WeatherSummary({ weather }: WeatherSummaryProps) {
   return (
     <div className="space-y-4">
-      {/* Temperature */}
+      {/* Temperature - balanced display */}
       <div className="border-2 border-eco-coral/60 bg-eco-white/80 backdrop-blur-sm p-3 rounded-lg">
-        <div className="text-3xl font-display font-black text-eco-black">{weather.tempHigh}°C</div>
-        <div className="text-xs font-bold text-eco-black/70 uppercase">
-          High (Low: {weather.tempLow}°C)
+        <div className="text-2xl font-display font-black text-eco-black">
+          {weather.tempLow}–{weather.tempHigh}°C{weather.tempNow ? `, (${weather.tempNow}°C now)` : ""}
         </div>
       </div>
 
-      {/* Conditions */}
+      {/* Conditions - show range if available */}
       <div className="border-2 border-eco-peach/60 bg-eco-white/80 backdrop-blur-sm p-3 rounded-lg">
-        <div className="text-lg font-display font-black text-eco-black uppercase">
-          {weather.conditions}
+        <div className="text-base font-display font-black text-eco-black uppercase leading-tight">
+          {weather.conditionsRange || weather.conditions}
         </div>
-        <div className="text-xs font-bold text-eco-black/70">
+        <div className="text-xs font-bold text-eco-black/70 mt-1">
           {weather.cloudCoveragePercent}% clouds
         </div>
       </div>
 
       {/* Wind & Rain Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="border-2 border-eco-sunset/60 bg-eco-white/80 backdrop-blur-sm p-3 rounded-lg">
-          <div className="text-2xl font-display font-black text-eco-black">
-            {weather.windSpeedMph}
+          <div className="text-xl font-display font-black text-eco-black">
+            {weather.windSpeedMph}–{weather.windSpeedMax}
           </div>
           <div className="text-xs font-bold text-eco-black/70 uppercase">mph wind</div>
         </div>
@@ -41,6 +40,13 @@ export default function WeatherSummary({ weather }: WeatherSummaryProps) {
             {weather.rainProbability}%
           </div>
           <div className="text-xs font-bold text-eco-black/70 uppercase">rain</div>
+        </div>
+
+        <div className="border-2 border-eco-coral/60 bg-eco-white/80 backdrop-blur-sm p-3 rounded-lg">
+          <div className="text-2xl font-display font-black text-eco-black">
+            {weather.avgHumidity}%
+          </div>
+          <div className="text-xs font-bold text-eco-black/70 uppercase">humidity</div>
         </div>
       </div>
 

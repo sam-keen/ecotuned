@@ -40,13 +40,42 @@ export function generateRecommendations(
           ? ' Higher humidity may slow drying slightly.'
           : ''
 
+    // Build time windows string from continuous drying periods
+    let timeWindowsText = ''
+    if (weather.continuousDryingPeriods && weather.continuousDryingPeriods.length > 0) {
+      const bestPeriods = weather.continuousDryingPeriods
+        .filter((p) => p.avgScore >= 0.5) // Only show good periods
+        .sort((a, b) => b.avgScore - a.avgScore) // Best first
+        .slice(0, 3) // Top 3 periods max
+
+      if (bestPeriods.length > 0) {
+        const formatHour = (h: number) => {
+          if (h === 0) return '12am'
+          if (h < 12) return `${h}am`
+          if (h === 12) return '12pm'
+          return `${h - 12}pm`
+        }
+
+        const timeWindows = bestPeriods.map((p) => {
+          const start = formatHour(p.startHour)
+          const end = formatHour(p.endHour + 1) // +1 because endHour is inclusive
+          return `${start}-${end}`
+        })
+
+        timeWindowsText =
+          timeWindows.length === 1
+            ? ` Best drying window: ${timeWindows[0]}.`
+            : ` Good drying windows: ${timeWindows.join(', ')}.`
+      }
+    }
+
     recommendations.push({
       id: 'line-dry',
       title: dryingQuality.title,
-      description: `${day === 'today' ? 'Today' : 'Tomorrow'} will have ${weather.dryingHours} hours of good drying conditions with ${weather.windSpeedMph}mph wind and ${weather.avgHumidity}% humidity.${humidityNote} Hang your washing outside to save energy and money.${windNote}`,
+      description: `${day === 'today' ? 'Today' : 'Tomorrow'} will have ${weather.dryingHours} hours of good drying conditions with ${weather.windSpeedMph}mph wind and ${weather.avgHumidity}% humidity.${timeWindowsText}${humidityNote}${windNote}`,
       reasoning: `${dryingQuality.reasoning} with low rain risk during sunny periods.`,
       priority: dryingQuality.priority,
-      savingsEstimate: 'Save £0.85-£1.50 per load vs tumble dryer',
+      savingsEstimate: 'Save £0.60-£1.50 per load vs tumble dryer',
       category: 'laundry',
       impact: 'high',
       isPersonalised: true,
@@ -60,7 +89,7 @@ export function generateRecommendations(
       description: `Low humidity ${day} (${weather.avgHumidity}%) means clothes will dry quickly indoors without additional heating. Use a clothes airer near natural ventilation.`,
       reasoning: 'Low humidity allows effective indoor drying, avoiding tumble dryer costs.',
       priority: 'medium',
-      savingsEstimate: 'Save £0.85-£1.50 per load vs tumble dryer',
+      savingsEstimate: 'Save £0.60-£1.50 per load vs tumble dryer',
       category: 'laundry',
       impact: 'high',
       isPersonalised: true,
@@ -429,6 +458,20 @@ function applyCategoryDiversity(recs: Recommendation[]): Recommendation[] {
 }
 
 /**
+ * Get current hour in UK timezone (Europe/London)
+ * This ensures accurate time comparisons regardless of user's location
+ */
+function getCurrentUKHour(): number {
+  const now = new Date()
+  const ukTime = new Date(
+    now.toLocaleString('en-US', {
+      timeZone: 'Europe/London',
+    })
+  )
+  return ukTime.getHours()
+}
+
+/**
  * Applies time-aware status to recommendations for today
  * Marks recommendations as 'passed' if their action window has elapsed
  *
@@ -447,8 +490,7 @@ function applyTimeStatus(
     return recs.map((rec) => ({ ...rec, timeStatus: 'active' as const }))
   }
 
-  const now = new Date()
-  const currentHour = now.getHours()
+  const currentHour = getCurrentUKHour()
 
   // Parse sunset time to get the hour
   const sunsetTime = new Date(weather.sunset)

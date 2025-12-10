@@ -177,16 +177,16 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
                 <div className="text-xs font-medium">
                   Showing tips for{' '}
                   {[
-                    preferences.hasGarden && 'gardens',
-                    preferences.hasEV && 'EV',
-                    preferences.hasSolar && 'solar',
-                    preferences.hasTimeOfUseTariff && 'off-peak tariff',
+                    preferences.hasGarden && 'line-drying',
+                    preferences.hasEV && 'EV charging',
+                    preferences.hasSolar && 'solar forecasts',
+                    preferences.hasTimeOfUseTariff && 'off-peak rates',
                     preferences.heatingType === 'heat-pump' && 'heat pump',
                     preferences.heatingType === 'electric' && 'electric heating',
-                    preferences.heatingType === 'other' && 'custom heating',
-                    preferences.hotWaterSystem === 'tank' && 'hot water tank',
-                    preferences.hotWaterSystem === 'electric' && 'electric immersion',
-                    preferences.hotWaterSystem === 'other' && 'custom hot water',
+                    preferences.heatingType === 'other' && 'other heating',
+                    preferences.hotWaterSystem === 'tank' && 'hot water timing',
+                    preferences.hotWaterSystem === 'electric' && 'immersion heating',
+                    preferences.hotWaterSystem === 'other' && 'other hot water',
                   ]
                     .filter(Boolean)
                     .join(', ')

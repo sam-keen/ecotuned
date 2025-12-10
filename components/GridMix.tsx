@@ -115,7 +115,7 @@ export default function GridMix({ gridData }: GridMixProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="text-xs font-display font-black text-eco-black uppercase leading-tight">
-              Power Mix
+              Live energy grid
             </div>
             <div className="relative flex items-center">
               <div className="w-1.5 h-1.5 bg-eco-sage rounded-full animate-pulse" />
