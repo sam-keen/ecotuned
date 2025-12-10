@@ -138,11 +138,26 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
     // No grid data for tomorrow - grid data is live only
   )
 
-  // Sort today's recommendations to put passed ones at the bottom
+  // Sort today's recommendations by priority, then put passed ones at the bottom
+  const getPriorityValue = (priority: string) => {
+    if (priority === 'high') return 3
+    if (priority === 'medium') return 2
+    if (priority === 'low') return 1
+    return 0
+  }
+
   const sortedTodayRecommendations = [...todayRecommendations].sort((a, b) => {
+    // First, sort by timeStatus (non-passed before passed)
     if (a.timeStatus === 'passed' && b.timeStatus !== 'passed') return 1
     if (a.timeStatus !== 'passed' && b.timeStatus === 'passed') return -1
-    return 0
+
+    // Within the same timeStatus group, sort by priority (high > medium > low)
+    return getPriorityValue(b.priority) - getPriorityValue(a.priority)
+  })
+
+  // Sort tomorrow's recommendations by priority
+  const sortedTomorrowRecommendations = [...tomorrowRecommendations].sort((a, b) => {
+    return getPriorityValue(b.priority) - getPriorityValue(a.priority)
   })
 
   return (
@@ -308,7 +323,7 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Tomorrow's Tips */}
               <div className="lg:col-span-8 space-y-6">
-                {tomorrowRecommendations.length === 0 ? (
+                {sortedTomorrowRecommendations.length === 0 ? (
                   <div className="eco-card p-8 text-center bg-gradient-to-br from-eco-sky/10 to-eco-azure/10">
                     <div className="mb-4 inline-block">
                       <Badge>All Clear</Badge>
@@ -323,7 +338,7 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
                     </p>
                   </div>
                 ) : (
-                  tomorrowRecommendations.map((tip, index) => {
+                  sortedTomorrowRecommendations.map((tip, index) => {
                     return (
                       <div key={tip.id} className="eco-card p-6 relative overflow-hidden">
                         <div className="relative z-10">
