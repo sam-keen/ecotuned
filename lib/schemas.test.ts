@@ -87,6 +87,40 @@ describe('userPreferencesSchema', () => {
       expect(result).toBeDefined()
     })
   })
+
+  test('should accept oil as heating type', () => {
+    const prefs = {
+      postcode: 'SW1A2AA',
+      heatingType: 'oil',
+      hotWaterSystem: 'tank',
+    }
+
+    const result = userPreferencesSchema.parse(prefs)
+
+    expect(result.heatingType).toBe('oil')
+    expect(result.hotWaterSystem).toBe('tank')
+  })
+
+  test('should default to gas and combi for heating', () => {
+    const prefs = { postcode: 'SW1A2AA' }
+
+    const result = userPreferencesSchema.parse(prefs)
+
+    expect(result.heatingType).toBe('gas')
+    expect(result.hotWaterSystem).toBe('combi')
+  })
+
+  test('should accept all valid heating types', () => {
+    const heatingTypes = ['gas', 'electric', 'heat-pump', 'oil', 'other']
+
+    heatingTypes.forEach((heatingType) => {
+      const result = userPreferencesSchema.parse({
+        postcode: 'SW1A2AA',
+        heatingType,
+      })
+      expect(result.heatingType).toBe(heatingType)
+    })
+  })
 })
 
 describe('simplifiedWeatherSchema', () => {

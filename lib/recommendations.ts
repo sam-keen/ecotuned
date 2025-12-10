@@ -276,7 +276,133 @@ export function generateRecommendations(
     }
   }
 
-  // 8. Hot water tank timing (temperature-aware)
+  // 8. Gas heating recommendations
+  if (prefs.heatingType === 'gas') {
+    // Mild weather thermostat reduction (12-18°C)
+    if (weather.avgTemp >= 12 && weather.avgTemp <= 18) {
+      const tempReduction = 1.5 // 1-2°C average
+      const suggestedTemp = Math.max(
+        15,
+        Math.round((prefs.preferredTemperature - tempReduction) * 2) / 2
+      )
+
+      recommendations.push({
+        id: 'gas-mild-weather',
+        title: 'Reduce gas heating in mild weather',
+        description: `Mild temperatures ${day} (${weather.avgTemp}°C) mean you can reduce your thermostat to ${suggestedTemp}°C (from ${prefs.preferredTemperature}°C) without discomfort. Layer up with a jumper for extra warmth.`,
+        reasoning:
+          'Each 1°C reduction saves 10-13% on gas heating costs. Mild weather is ideal for comfort at lower settings.',
+        priority: 'medium',
+        savingsEstimate: 'Save £0.10-£0.25 per day',
+        category: 'heating',
+        impact: 'medium',
+        isPersonalised: true,
+      })
+    }
+
+    // Cold weather pre-heating strategy
+    if (weather.tempLow < 5 && day === 'tomorrow') {
+      const preheatTemp = Math.min(25, prefs.preferredTemperature + 1)
+      const nightTemp = Math.max(15, prefs.preferredTemperature - 1)
+
+      recommendations.push({
+        id: 'gas-cold-preheat',
+        title: 'Pre-heat before cold snap',
+        description: `Very cold night ahead (${weather.tempLow}°C). Pre-heat your home to ${preheatTemp}°C in the evening (6-8pm), then reduce to ${nightTemp}°C overnight. This reduces strain on your boiler during the coldest hours.`,
+        reasoning:
+          'Gas boilers are less efficient in very cold weather. Pre-heating while temperatures are milder saves energy.',
+        priority: 'medium',
+        savingsEstimate: 'Save £0.25-£0.50 per day',
+        category: 'heating',
+        impact: 'medium',
+        isPersonalised: true,
+      })
+    }
+
+    // Gas + solar electric substitution
+    if (prefs.hasSolar && weather.sunnyHours > 3) {
+      recommendations.push({
+        id: 'gas-solar-electric',
+        title: 'Use electric appliances during solar hours',
+        description: `Strong solar generation ${day} (${weather.sunnyHours} sunny hours). Use electric kettle, microwave, and washing machine during peak sun hours instead of gas stove/oven. Your solar panels will power these for free.`,
+        reasoning:
+          'Solar electricity is free once panels are installed. Using electric appliances instead of gas during solar hours maximises savings.',
+        priority: 'medium',
+        savingsEstimate: 'Save £0.15-£0.40 per day',
+        category: 'appliances',
+        impact: 'medium',
+        isPersonalised: true,
+      })
+    }
+  }
+
+  // 9. Oil heating recommendations
+  if (prefs.heatingType === 'oil') {
+    // Mild weather thermostat reduction (more aggressive than gas)
+    if (weather.avgTemp >= 12 && weather.avgTemp <= 18) {
+      const tempReduction = 2 // Oil is more expensive than gas
+      const suggestedTemp = Math.max(
+        15,
+        Math.round((prefs.preferredTemperature - tempReduction) * 2) / 2
+      )
+
+      recommendations.push({
+        id: 'oil-mild-weather',
+        title: 'Reduce oil heating in mild weather',
+        description: `Mild temperatures ${day} (${weather.avgTemp}°C) mean you can reduce your thermostat to ${suggestedTemp}°C (from ${prefs.preferredTemperature}°C). Layer up with a jumper or blanket to stay comfortable. Make sure you still feel warm enough.`,
+        reasoning:
+          'Each 1°C reduction saves 10-13% on heating costs. Oil heating costs 9-11p/kWh vs 6.29p/kWh for gas. We don\'t suggest going below 15°C.',
+        priority: 'medium',
+        savingsEstimate: 'Save £0.20-£0.35 per day',
+        category: 'heating',
+        impact: 'medium',
+        isPersonalised: true,
+      })
+    }
+
+    // Zone heating for very cold weather
+    if (weather.tempLow < 5) {
+      const zoneReduction = 4
+
+      recommendations.push({
+        id: 'oil-cold-weather',
+        title: 'Use zone heating to save on oil',
+        description: `Very cold ${day} (${weather.tempLow}°C). Close doors and reduce heating in unused rooms by ${zoneReduction}°C. Focus your heating budget on the rooms you actually use, keeping them comfortable whilst reducing costs.`,
+        reasoning:
+          'Oil boilers are less efficient in very cold weather. Zone heating reduces the volume of space being heated, significantly cutting costs. Keep occupied rooms at a comfortable temperature.',
+        priority: 'high',
+        savingsEstimate: 'Save £1.00-£1.50 per day',
+        category: 'heating',
+        impact: 'high',
+        isPersonalised: true,
+      })
+    }
+
+    // Batch heating for stable mild weather
+    const isStableMild =
+      weather.avgTemp >= 10 &&
+      weather.avgTemp <= 16 &&
+      Math.abs(weather.tempHigh - weather.tempLow) < 8
+
+    if (isStableMild) {
+      const batchTemp = Math.min(25, prefs.preferredTemperature + 1)
+
+      recommendations.push({
+        id: 'oil-batch-heating',
+        title: 'Consider batch heating if well-insulated',
+        description: `Stable mild weather ${day} (${weather.tempLow}-${weather.tempHigh}°C). You could heat to ${batchTemp}°C twice daily (morning and evening) instead of constant low heat - but only if your home is well-insulated enough to retain heat between cycles. Make sure you can stay comfortable as temperatures drop between heating periods.`,
+        reasoning:
+          'Oil boilers are more efficient at higher output for shorter periods. This approach suits well-insulated homes where temperature drops slowly between heating cycles.',
+        priority: 'low',
+        savingsEstimate: 'Save £0.30-£0.50 per day',
+        category: 'heating',
+        impact: 'medium',
+        isPersonalised: true,
+      })
+    }
+  }
+
+  // 10. Hot water tank timing (temperature-aware)
   if (prefs.hotWaterSystem === 'tank' && prefs.hasTimeOfUseTariff) {
     if (weather.tempLow > 10) {
       recommendations.push({

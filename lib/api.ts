@@ -156,9 +156,9 @@ function calculateDryingScore(hourData: any): number {
   if (temp >= 21) {
     score += 0.1
   } else if (temp >= 15) {
-    score += 0.1 * (temp - 15) / 6 // Linear increase
+    score += (0.1 * (temp - 15)) / 6 // Linear increase
   } else if (temp >= 5) {
-    score += 0.05 * (temp - 5) / 10 // Partial credit for cool days
+    score += (0.05 * (temp - 5)) / 10 // Partial credit for cool days
   }
 
   // Time of day factor (5% of score)
@@ -226,8 +226,7 @@ function findContinuousDryingPeriods(
 
   // Don't forget the last period if it extends to end of day
   if (currentPeriod.length > 0) {
-    const avgScore =
-      currentPeriod.reduce((sum, h) => sum + h.dryingScore, 0) / currentPeriod.length
+    const avgScore = currentPeriod.reduce((sum, h) => sum + h.dryingScore, 0) / currentPeriod.length
     periods.push({
       startHour: currentPeriod[0].hour,
       endHour: currentPeriod[currentPeriod.length - 1].hour,
@@ -303,7 +302,9 @@ function processDayWeather(data: any, dateStr: string, label: string): Simplifie
   )
 
   // Calculate max wind speed (gusts) (convert km/h to mph)
-  const maxWindSpeed = Math.round(Math.max(...dayHourlyData.map((h: any) => h.windSpeed)) * 0.621371)
+  const maxWindSpeed = Math.round(
+    Math.max(...dayHourlyData.map((h: any) => h.windSpeed)) * 0.621371
+  )
 
   // Calculate max rain probability
   const maxRainProb = Math.round(Math.max(...dayHourlyData.map((h: any) => h.rainProb)))
@@ -329,7 +330,10 @@ function processDayWeather(data: any, dateStr: string, label: string): Simplifie
 
   // Create range string if conditions vary significantly
   let conditionsRange: string | undefined
-  if (sortedBySeverity.length > 1 && getWeatherSeverity(mostSevereCode) - getWeatherSeverity(leastSevereCode) >= 2) {
+  if (
+    sortedBySeverity.length > 1 &&
+    getWeatherSeverity(mostSevereCode) - getWeatherSeverity(leastSevereCode) >= 2
+  ) {
     const leastSevereCondition = getWeatherConditionFromCode(leastSevereCode)
     conditionsRange = `${leastSevereCondition} / ${conditions}`
   }
@@ -368,12 +372,10 @@ function processDayWeather(data: any, dateStr: string, label: string): Simplifie
   const currentUKHour = isToday ? getCurrentUKHour() : -1
 
   // Get current temperature (for today only)
-  let tempNow;
+  let tempNow
 
   if (isToday) {
-    const currentHourData = dayHourlyData.find(
-      (h: any) => h.hour === currentUKHour
-    )
+    const currentHourData = dayHourlyData.find((h: any) => h.hour === currentUKHour)
 
     if (currentHourData) {
       tempNow = Math.round(currentHourData.temp)

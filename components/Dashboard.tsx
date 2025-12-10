@@ -183,6 +183,7 @@ export default function Dashboard({ preferences, initialData }: DashboardProps) 
                     preferences.hasTimeOfUseTariff && 'off-peak rates',
                     preferences.heatingType === 'heat-pump' && 'heat pump',
                     preferences.heatingType === 'electric' && 'electric heating',
+                    preferences.heatingType === 'oil' && 'oil heating',
                     preferences.heatingType === 'other' && 'other heating',
                     preferences.hotWaterSystem === 'tank' && 'hot water timing',
                     preferences.hotWaterSystem === 'electric' && 'immersion heating',

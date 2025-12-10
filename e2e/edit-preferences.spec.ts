@@ -127,4 +127,41 @@ test.describe('Edit preferences flow', () => {
     // Should stay in edit modal
     await expect(page.getByText('Edit Preferences')).toBeVisible()
   })
+
+  test('should auto-reset hot water system when changing from gas to electric heating', async ({
+    page,
+  }) => {
+    // Open edit modal
+    await page.getByRole('button', { name: /^edit$/i }).click()
+
+    // Heating should default to gas and hot water to combi
+    const heatingSelect = page.getByLabel('Heating Type')
+    const hotWaterSelect = page.getByLabel('Hot Water System')
+
+    // Verify initial state (gas allows combi)
+    await expect(heatingSelect).toHaveValue('gas')
+
+    // Change to electric heating
+    await heatingSelect.selectOption('electric')
+
+    // Wait a moment for the form to react
+    await page.waitForTimeout(100)
+
+    // Verify combi boiler option is no longer available
+    const options = await hotWaterSelect.locator('option').allTextContents()
+    expect(options.some((opt) => opt.includes('Combi'))).toBe(false)
+
+    // Hot water should have auto-reset to a valid option (tank or electric)
+    const currentValue = await hotWaterSelect.inputValue()
+    expect(['tank', 'electric', 'other']).toContain(currentValue)
+
+    // Save changes
+    await page.getByRole('button', { name: /^save$/i }).click()
+
+    // Should redirect back to main page
+    await page.waitForURL('/')
+
+    // Verify recommendations are displayed
+    await expect(page.getByRole('button', { name: /^today$/i })).toBeVisible()
+  })
 })

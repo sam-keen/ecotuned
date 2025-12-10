@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { userPreferencesSchema, type UserPreferences } from '@/lib/schemas'
@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import * as Dialog from '@radix-ui/react-dialog'
 import Badge from './Badge'
+import { getValidHotWaterOptions } from '@/lib/heatingUtils'
 
 interface EditPreferencesProps {
   currentPreferences: UserPreferences
@@ -25,11 +26,26 @@ export default function EditPreferences({ currentPreferences }: EditPreferencesP
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<UserPreferences>({
     resolver: zodResolver(userPreferencesSchema),
     defaultValues: currentPreferences,
   })
+
+  const heatingType = watch('heatingType', currentPreferences.heatingType)
+
+  // Compute valid hot water options based on heating type
+  const validHotWaterOptions = useMemo(() => getValidHotWaterOptions(heatingType), [heatingType])
+
+  // Auto-reset hot water system if current selection becomes invalid
+  useEffect(() => {
+    const currentHotWater = watch('hotWaterSystem')
+    if (!validHotWaterOptions.includes(currentHotWater)) {
+      setValue('hotWaterSystem', validHotWaterOptions[0] as any)
+    }
+  }, [heatingType, validHotWaterOptions, watch, setValue])
 
   const onSubmit = async (data: UserPreferences) => {
     setIsSubmitting(true)
@@ -248,6 +264,7 @@ export default function EditPreferences({ currentPreferences }: EditPreferencesP
                   <option value="gas">Gas Boiler</option>
                   <option value="electric">Electric Heating</option>
                   <option value="heat-pump">Heat Pump</option>
+                  <option value="oil">Oil Boiler</option>
                   <option value="other">Other</option>
                 </select>
               </div>
@@ -265,10 +282,16 @@ export default function EditPreferences({ currentPreferences }: EditPreferencesP
                   id="edit-hotWaterSystem"
                   className="w-full pl-4 pr-10 py-3 border-2 border-eco-border rounded-lg font-medium focus:ring-4 focus:ring-eco-mint bg-white"
                 >
-                  <option value="combi">Combi Boiler (instant)</option>
-                  <option value="tank">Hot Water Tank</option>
-                  <option value="electric">Electric Immersion</option>
-                  <option value="other">Other</option>
+                  {validHotWaterOptions.includes('combi') && (
+                    <option value="combi">Combi Boiler (instant)</option>
+                  )}
+                  {validHotWaterOptions.includes('tank') && (
+                    <option value="tank">Hot Water Tank</option>
+                  )}
+                  {validHotWaterOptions.includes('electric') && (
+                    <option value="electric">Electric Immersion</option>
+                  )}
+                  {validHotWaterOptions.includes('other') && <option value="other">Other</option>}
                 </select>
               </div>
 

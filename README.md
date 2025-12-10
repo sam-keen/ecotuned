@@ -24,8 +24,12 @@ A weather-driven energy and money-saving suggestion app that helps UK users make
 2. **Electric Vehicle**: For smart EV charging times (solar + off-peak optimisation)
 3. **Solar Panels**: For solar generation forecasts and energy usage timing
 4. **Cheaper Night-Time Electricity**: Time-of-use tariffs like Economy 7, Octopus Agile, etc.
-5. **Heating Type**: Gas Boiler, Electric Heating, Heat Pump, or Other (for heating-specific tips)
-6. **Hot Water System**: Combi Boiler, Hot Water Tank, Electric Immersion, or Other (for timing recommendations)
+5. **Heating Type**: Gas Boiler, Electric Heating, Heat Pump, Oil Boiler, or Other (for heating-specific tips)
+6. **Hot Water System**: Options adapt based on your heating type
+   - Gas: Combi Boiler, Hot Water Tank, or Other
+   - Electric: Hot Water Tank, Electric Immersion, or Other
+   - Heat Pump: Hot Water Tank or Other
+   - Oil: Hot Water Tank or Other
 7. **Preferred Home Temperature**: 15-25°C (for personalised heating recommendations)
 
 ## Tech Stack
@@ -205,10 +209,15 @@ generateRecommendations(
 
 1. **Laundry**: Line-drying (outdoor), indoor drying (low humidity)
 2. **Mobility**: EV charging (solar + off-peak optimisation)
-3. **Heating**: Heat pump efficiency, natural ventilation, hot water timing
+3. **Heating**:
+   - Heat pump efficiency optimization
+   - Gas heating: Thermostat reduction in mild weather, pre-heating before cold snaps, solar-electric appliance substitution
+   - Oil heating: Thermostat reduction (more aggressive than gas), zone heating in cold weather, batch heating strategy
+   - Hot water timing (tank-based systems)
+   - Natural ventilation
 4. **Cooking**: Batch cooking on cold/rainy days, avoid oven heat on hot days
 5. **Insulation**: Curtains/blinds for temperature control
-6. **Appliances**: Off-peak dishwasher/washing machine for time-of-use tariffs
+6. **Appliances**: Off-peak dishwasher/washing machine for time-of-use tariffs, grid-aware usage during clean energy periods
 
 ## Testing
 
@@ -297,6 +306,10 @@ No environment variables required!
 - **Line-dry laundry**: "Excellent line-drying conditions tomorrow with 5 hours of good drying and 10mph wind at 65% humidity. Hang your washing outside to save energy and money."
 - **EV solar charging**: "Best charging window: 12:00-14:00 when your solar panels will generate maximum power. Clear skies with temperatures around 18°C mean strong solar generation."
 - **Heat pump efficiency**: "Temperatures tomorrow (10°C) are ideal for heat pump efficiency. Your system will use 30-40% less energy than in very cold weather."
+- **Gas heating - mild weather**: "Mild temperatures tomorrow (15°C) mean you can reduce your thermostat to 18.5°C (from 20°C) without discomfort. Layer up with a jumper for extra warmth. Save £0.10-£0.25 per day."
+- **Gas heating - cold preheat**: "Very cold night ahead (3°C). Pre-heat your home to 20°C in the evening (6-8pm), then reduce to 18°C overnight. This reduces strain on your boiler during the coldest hours. Save £0.25-£0.50 per day."
+- **Oil heating - zone heating**: "Very cold tomorrow (3°C). Close doors and reduce heating in unused rooms by 4°C. Focus heat on living spaces. Oil heating is expensive - zone heating can cut costs by 30-40%. Save £1.00-£1.50 per day."
+- **Oil heating - batch heating**: "Stable mild weather tomorrow (11-15°C). Heat to 20°C twice daily (morning and evening) instead of maintaining constant low heat. Oil boilers are more efficient at higher output. Save £0.30-£0.50 per day."
 - **Hot water tank timing**: "Mild night ahead (12°C low) means less heat loss from your tank. Heat during off-peak hours (11pm-7am) for maximum savings."
 - **Electric heating with solar**: "Strong solar generation tomorrow - run electric heating 13:00-15:00 to use your own electricity."
 

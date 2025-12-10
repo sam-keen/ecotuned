@@ -12,7 +12,8 @@ export default function WeatherSummary({ weather }: WeatherSummaryProps) {
       {/* Temperature - balanced display */}
       <div className="border-2 border-eco-coral/60 bg-eco-white/80 backdrop-blur-sm p-3 rounded-lg">
         <div className="text-2xl font-display font-black text-eco-black">
-          {weather.tempLow}–{weather.tempHigh}°C{weather.tempNow ? `, (${weather.tempNow}°C now)` : ""}
+          {weather.tempLow}–{weather.tempHigh}°C
+          {weather.tempNow ? `, (${weather.tempNow}°C now)` : ''}
         </div>
       </div>
 

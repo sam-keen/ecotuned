@@ -12,7 +12,7 @@ export const userPreferencesSchema = z.object({
   hasSolar: z.boolean().default(false),
   hasTimeOfUseTariff: z.boolean().default(false), // Economy 7, Octopus Agile, etc.
   preferredTemperature: z.number().min(15).max(25).default(19), // User's preferred home temperature in Celsius
-  heatingType: z.enum(['gas', 'electric', 'heat-pump', 'other']).default('gas'), // Type of heating system
+  heatingType: z.enum(['gas', 'electric', 'heat-pump', 'oil', 'other']).default('gas'), // Type of heating system
   hotWaterSystem: z.enum(['combi', 'tank', 'electric', 'other']).default('combi'), // Type of hot water system
 })
 

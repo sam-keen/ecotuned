@@ -243,7 +243,12 @@ describe('generateRecommendations', () => {
   })
 
   test('should generate hot water tank timing recommendations for cold nights', () => {
-    const prefs = { ...basePrefs, hotWaterSystem: 'tank' as const, hasTimeOfUseTariff: true }
+    const prefs = {
+      ...basePrefs,
+      heatingType: 'electric' as const,
+      hotWaterSystem: 'tank' as const,
+      hasTimeOfUseTariff: true,
+    }
     const weather = { ...baseWeather, tempLow: 2, avgTemp: 6 }
 
     const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
@@ -288,6 +293,14 @@ describe('generateRecommendations', () => {
         'electric-heating-solar',
         'tank-mild-night',
         'tank-cold-night',
+        'gas-mild-weather',
+        'gas-cold-preheat',
+        'gas-solar-electric',
+        'oil-mild-weather',
+        'oil-cold-weather',
+        'oil-batch-heating',
+        'heat-pump-optimal',
+        'heat-pump-cold-weather',
       ]).toContain(rec.id)
     })
   })
@@ -405,6 +418,178 @@ describe('generateRecommendations', () => {
 
       const gridRec = recommendations.find((r) => r.id === 'grid-clean-now')
       expect(gridRec).toBeUndefined()
+    })
+  })
+
+  describe('Gas heating recommendations', () => {
+    test('should generate gas-mild-weather recommendation in mild conditions', () => {
+      const prefs = { ...basePrefs, heatingType: 'gas' as const, preferredTemperature: 20 }
+      const weather = { ...baseWeather, avgTemp: 15, tempLow: 12, tempHigh: 18 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const gasMild = recommendations.find((r) => r.id === 'gas-mild-weather')
+      expect(gasMild).toBeDefined()
+      expect(gasMild?.priority).toBe('medium')
+      expect(gasMild?.category).toBe('heating')
+      expect(gasMild?.description).toContain('18.5')
+      expect(gasMild?.description).toContain('20')
+      expect(gasMild?.savingsEstimate).toContain('£0.10-£0.25')
+      expect(gasMild?.isPersonalised).toBe(true)
+    })
+
+    test('should not generate gas-mild-weather when temperature is too cold', () => {
+      const prefs = { ...basePrefs, heatingType: 'gas' as const }
+      const weather = { ...baseWeather, avgTemp: 8 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const gasMild = recommendations.find((r) => r.id === 'gas-mild-weather')
+      expect(gasMild).toBeUndefined()
+    })
+
+    test('should generate gas-cold-preheat recommendation for tomorrow when very cold', () => {
+      const prefs = { ...basePrefs, heatingType: 'gas' as const, preferredTemperature: 19 }
+      const weather = { ...baseWeather, tempLow: 3, avgTemp: 6 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const coldPreheat = recommendations.find((r) => r.id === 'gas-cold-preheat')
+      expect(coldPreheat).toBeDefined()
+      expect(coldPreheat?.description).toContain('Pre-heat')
+      expect(coldPreheat?.description).toContain('20')
+      expect(coldPreheat?.description).toContain('18')
+      expect(coldPreheat?.savingsEstimate).toContain('£0.25-£0.50')
+      expect(coldPreheat?.isPersonalised).toBe(true)
+    })
+
+    test('should not generate gas-cold-preheat for today (only tomorrow)', () => {
+      const prefs = { ...basePrefs, heatingType: 'gas' as const }
+      const weather = { ...baseWeather, tempLow: 3 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'today')
+
+      const coldPreheat = recommendations.find((r) => r.id === 'gas-cold-preheat')
+      expect(coldPreheat).toBeUndefined()
+    })
+
+    test('should generate gas-solar-electric with solar panels and sunny weather', () => {
+      const prefs = { ...basePrefs, heatingType: 'gas' as const, hasSolar: true }
+      const weather = { ...baseWeather, sunnyHours: 5 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const gasSolar = recommendations.find((r) => r.id === 'gas-solar-electric')
+      expect(gasSolar).toBeDefined()
+      expect(gasSolar?.description).toContain('electric kettle')
+      expect(gasSolar?.description).toContain('solar')
+      expect(gasSolar?.savingsEstimate).toContain('£0.15-£0.40')
+      expect(gasSolar?.category).toBe('appliances')
+      expect(gasSolar?.isPersonalised).toBe(true)
+    })
+
+    test('should not generate gas-solar-electric without solar panels', () => {
+      const prefs = { ...basePrefs, heatingType: 'gas' as const, hasSolar: false }
+      const weather = { ...baseWeather, sunnyHours: 5 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const gasSolar = recommendations.find((r) => r.id === 'gas-solar-electric')
+      expect(gasSolar).toBeUndefined()
+    })
+
+    test('should respect user preferred temperature in gas recommendations', () => {
+      const prefs = { ...basePrefs, heatingType: 'gas' as const, preferredTemperature: 22 }
+      const weather = { ...baseWeather, avgTemp: 15 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const gasMild = recommendations.find((r) => r.id === 'gas-mild-weather')
+      expect(gasMild?.description).toContain('22')
+    })
+  })
+
+  describe('Oil heating recommendations', () => {
+    test('should generate oil-mild-weather recommendation in mild conditions', () => {
+      const prefs = { ...basePrefs, heatingType: 'oil' as const, preferredTemperature: 20 }
+      const weather = { ...baseWeather, avgTemp: 14, tempLow: 12, tempHigh: 16 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const oilMild = recommendations.find((r) => r.id === 'oil-mild-weather')
+      expect(oilMild).toBeDefined()
+      expect(oilMild?.priority).toBe('medium')
+      expect(oilMild?.category).toBe('heating')
+      expect(oilMild?.description).toContain('18')
+      expect(oilMild?.description).toContain('20')
+      expect(oilMild?.savingsEstimate).toContain('£0.20-£0.35')
+      expect(oilMild?.isPersonalised).toBe(true)
+    })
+
+    test('should generate oil-cold-weather recommendation when very cold', () => {
+      const prefs = { ...basePrefs, heatingType: 'oil' as const }
+      const weather = { ...baseWeather, tempLow: 2, avgTemp: 5 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const oilCold = recommendations.find((r) => r.id === 'oil-cold-weather')
+      expect(oilCold).toBeDefined()
+      expect(oilCold?.priority).toBe('high')
+      expect(oilCold?.description).toContain('zone heating')
+      expect(oilCold?.description).toContain('4')
+      expect(oilCold?.savingsEstimate).toContain('£1.00-£1.50')
+      expect(oilCold?.isPersonalised).toBe(true)
+    })
+
+    test('should generate oil-batch-heating recommendation in stable mild weather', () => {
+      const prefs = { ...basePrefs, heatingType: 'oil' as const, preferredTemperature: 19 }
+      const weather = { ...baseWeather, avgTemp: 13, tempLow: 11, tempHigh: 15 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const oilBatch = recommendations.find((r) => r.id === 'oil-batch-heating')
+      expect(oilBatch).toBeDefined()
+      expect(oilBatch?.description).toContain('twice daily')
+      expect(oilBatch?.description).toContain('20')
+      expect(oilBatch?.savingsEstimate).toContain('£0.30-£0.50')
+      expect(oilBatch?.isPersonalised).toBe(true)
+    })
+
+    test('should not generate oil-batch-heating when temp swing is too large', () => {
+      const prefs = { ...basePrefs, heatingType: 'oil' as const }
+      const weather = { ...baseWeather, avgTemp: 13, tempLow: 8, tempHigh: 18 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const oilBatch = recommendations.find((r) => r.id === 'oil-batch-heating')
+      expect(oilBatch).toBeUndefined()
+    })
+
+    test('should respect preferred temperature range limits in oil recommendations', () => {
+      const prefs = { ...basePrefs, heatingType: 'oil' as const, preferredTemperature: 15 }
+      const weather = { ...baseWeather, avgTemp: 14 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const oilMild = recommendations.find((r) => r.id === 'oil-mild-weather')
+      // Should not suggest reducing below 15°C
+      if (oilMild) {
+        expect(oilMild.description).not.toContain('13')
+      }
+    })
+
+    test('should generate multiple oil recommendations when conditions match', () => {
+      const prefs = { ...basePrefs, heatingType: 'oil' as const }
+      const weather = { ...baseWeather, avgTemp: 13, tempLow: 10, tempHigh: 16 }
+
+      const recommendations = generateRecommendations(weather, prefs, false, 'tomorrow')
+
+      const oilMild = recommendations.find((r) => r.id === 'oil-mild-weather')
+      const oilBatch = recommendations.find((r) => r.id === 'oil-batch-heating')
+
+      expect(oilMild).toBeDefined()
+      expect(oilBatch).toBeDefined()
+      // Note: oil-cold-weather won't trigger because tempLow is 10 (needs <5)
     })
   })
 })

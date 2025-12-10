@@ -97,4 +97,35 @@ test.describe('Fresh user flow', () => {
     await expect(page.getByRole('button', { name: /^today$/i })).toBeVisible()
     await expect(page.getByText(/M1 1AE/)).toBeVisible()
   })
+
+  test('should disable combi boiler option when oil heating is selected', async ({ page }) => {
+    await page.goto('/')
+
+    // Fill in postcode
+    await page.getByLabel('Postcode').fill('SW1A 2AA')
+
+    // Select oil heating
+    const heatingSelect = page.getByLabel('Heating Type')
+    await heatingSelect.selectOption('oil')
+
+    // Verify combi boiler option is not available
+    const hotWaterSelect = page.getByLabel('Hot Water System')
+    const options = await hotWaterSelect.locator('option').allTextContents()
+
+    // Combi should not be in the list
+    expect(options.some((opt) => opt.includes('Combi'))).toBe(false)
+
+    // Tank should be available
+    expect(options.some((opt) => opt.includes('Tank'))).toBe(true)
+
+    // Select tank and submit
+    await hotWaterSelect.selectOption('tank')
+    await page.getByRole('button', { name: /get my tips/i }).click()
+
+    // Wait for recommendations
+    await page.waitForURL('/')
+
+    // Verify recommendations are displayed
+    await expect(page.getByRole('button', { name: /^today$/i })).toBeVisible()
+  })
 })
