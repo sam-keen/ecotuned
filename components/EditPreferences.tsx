@@ -150,7 +150,7 @@ export default function EditPreferences({ currentPreferences }: EditPreferencesP
                   htmlFor="edit-postcode"
                   className="block text-xs font-black text-black mb-2 uppercase"
                 >
-                  Postcode
+                  UK postcode
                 </label>
                 <input
                   {...register('postcode')}

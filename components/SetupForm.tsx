@@ -66,7 +66,7 @@ export default function SetupForm() {
           htmlFor="postcode"
           className="block text-sm font-black text-black mb-2 uppercase tracking-wide"
         >
-          Postcode
+          UK postcode
         </label>
         <input
           {...register('postcode')}

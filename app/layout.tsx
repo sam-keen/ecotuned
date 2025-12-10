@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     EcoTuned
                   </h1>
                   <p className="text-sm text-eco-black font-bold uppercase tracking-wide mt-1">
-                    Weather-smart energy tips
+                    UK weather-smart energy tips
                   </p>
                 </div>
                 <div id="header-controls"></div>
