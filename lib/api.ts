@@ -331,7 +331,7 @@ function processDayWeather(data: any, dateStr: string, label: string): Simplifie
   let conditionsRange: string | undefined
   if (sortedBySeverity.length > 1 && getWeatherSeverity(mostSevereCode) - getWeatherSeverity(leastSevereCode) >= 2) {
     const leastSevereCondition = getWeatherConditionFromCode(leastSevereCode)
-    conditionsRange = `${leastSevereCondition} → ${conditions}`
+    conditionsRange = `${leastSevereCondition} / ${conditions}`
   }
 
   // Find sunny periods (good solar radiation > 200 W/m²)

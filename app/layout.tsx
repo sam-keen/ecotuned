@@ -57,7 +57,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <p className="text-eco-black/70 font-display font-black tracking-tighter uppercase text-base">
                   EcoTuned
                 </p>
-                <p>EcoTuned st</p>
                 <div className="mt-4 text-eco-black/60 text-xs space-y-1 ">
                   <p>
                     Weather data from{' '}
